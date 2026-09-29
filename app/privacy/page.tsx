@@ -1,0 +1,1 @@
+export default function Privacy(){return <main className="simple-page"><a href="/">← doably</a><h1>Privacy</h1><p>Doably will publish its privacy policy here before collecting personal information or enabling analytics.</p></main>}
