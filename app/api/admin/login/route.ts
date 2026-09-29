@@ -1,0 +1,2 @@
+import {NextRequest,NextResponse} from 'next/server';import {adminCookie,createAdminToken} from '@/lib/admin';
+export async function POST(r:NextRequest){const {password}=await r.json();if(!process.env.ADMIN_PASSWORD||password!==process.env.ADMIN_PASSWORD)return NextResponse.json({error:'Invalid password'},{status:401});const out=NextResponse.json({ok:true});out.cookies.set(adminCookie.name,createAdminToken(),{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:adminCookie.maxAge});return out}
