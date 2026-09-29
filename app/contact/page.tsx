@@ -1,0 +1,1 @@
+export default function Contact(){return <main className="simple-page"><a href="/">← doably</a><h1>Contact</h1><p>Questions, suggestions, or link corrections? Contact Doably at the email address you publish here.</p></main>}
