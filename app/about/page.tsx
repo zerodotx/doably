@@ -1,0 +1,1 @@
+export default function About(){return <main className="simple-page"><a href="/">← doably</a><h1>About Doably</h1><p>Doably helps people discover practical ways to use the skills they already have.</p></main>}
