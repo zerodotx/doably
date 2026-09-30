@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3, BookOpen, ChevronRight, Database, ExternalLink, FileText, FolderKanban,
   LayoutDashboard, Link2, LogOut, Megaphone, Plus, Search, Settings2, Sparkles,
-  Trash2, Users, X
+  Trash2, Users, X, Menu
 } from 'lucide-react';
 
 type Skill={id:number;name:string;slug:string};
@@ -21,7 +21,7 @@ const empty:Data={skills:[],categories:[],links:[],subscribers:[],searchTerms:[]
 
 export default function Admin(){
   const [ok,setOk]=useState(false),[pw,setPw]=useState(''),[data,setData]=useState<Data>(empty);
-  const [tab,setTab]=useState<Tab>('overview'),[query,setQuery]=useState(''),[formOpen,setFormOpen]=useState(false);
+  const [tab,setTab]=useState<Tab>('overview'),[query,setQuery]=useState(''),[formOpen,setFormOpen]=useState(false),[sidebarOpen,setSidebarOpen]=useState(false);
   const [form,setForm]=useState<Record<string,string>>({}),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true);
 
   async function load(){setLoading(true);const r=await fetch('/api/admin/data');if(r.ok){setData(await r.json());setOk(true)}else setOk(false);setLoading(false)}
@@ -44,17 +44,17 @@ export default function Admin(){
   const counts={skills:data.skills.length,paths:data.categories.length,articles:data.links.length,'article-studio':data.blogArticles.length,subscribers:data.subscribers.length,search:data.searchTerms.length};
 
   return <main className="admin-app">
-    <aside className="admin-sidebar">
+    {sidebarOpen&&<button aria-label="Close menu" className="admin-sidebar-overlay" onClick={()=>setSidebarOpen(false)}/>}<aside className={`admin-sidebar${sidebarOpen?' open':''}`}>
       <a href="/" className="admin-logo">doably<span className="admin-logo-dot">.</span></a>
       <div className="admin-sidebar-label">Manage</div>
-      <nav>{nav.map(([id,label,Icon])=><button key={id} className={tab===id?'active':''} onClick={()=>{setTab(id);setQuery('')}}><Icon size={17}/>{label}{id!=='overview'&&<span>{counts[id as keyof typeof counts]??''}</span>}</button>)}</nav>
+      <nav>{nav.map(([id,label,Icon])=><button key={id} className={tab===id?'active':''} onClick={()=>{setTab(id);setQuery('');setSidebarOpen(false)}}><Icon size={17}/>{label}{id!=='overview'&&<span>{counts[id as keyof typeof counts]??''}</span>}</button>)}</nav>
       <div className="admin-sidebar-label admin-sidebar-bottom-label">Quick links</div>
       <nav className="admin-secondary-nav"><a href="/" target="_blank"><ExternalLink size={16}/>View website</a><a href="/blog" target="_blank"><BookOpen size={16}/>Open blog</a></nav>
       <button className="admin-logout" onClick={logout}><LogOut size={16}/>Log out</button>
     </aside>
 
     <section className="admin-main">
-      <header className="admin-topbar"><div><div className="admin-breadcrumb">Doably / Admin</div><h1>{title}</h1></div><div className="admin-top-actions"><a href="/" target="_blank" className="admin-view-site">View site <ExternalLink size={14}/></a><button className="admin-avatar">A</button></div></header>
+      <header className="admin-topbar"><div className="admin-mobile-top"><button aria-label="Open menu" className="admin-menu-button" onClick={()=>setSidebarOpen(true)}><Menu size={21}/></button><a href="/" className="admin-mobile-logo">doably</a></div><div><div className="admin-breadcrumb">Doably / Admin</div><h1>{title}</h1></div><div className="admin-top-actions"><a href="/" target="_blank" className="admin-view-site">View site <ExternalLink size={14}/></a><button className="admin-avatar">A</button></div></header>
 
       {tab==='overview'&&<div className="admin-content">
         <div className="admin-welcome"><div><span className="admin-eyebrow">Control center</span><h2>Everything in one place.</h2><p>Manage what users discover, what appears in search, and the content that powers Doably.</p></div><Sparkles size={54}/></div>
