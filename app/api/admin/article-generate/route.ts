@@ -3,8 +3,8 @@ import { isAdmin } from '@/lib/admin';
 
 export async function POST(request: NextRequest) {
   if (!(await isAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return NextResponse.json({ error: 'OPENAI_API_KEY is not configured in Vercel.' }, { status: 503 });
+  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!key) return NextResponse.json({ error: 'GEMINI_API_KEY is not configured in Vercel.' }, { status: 503 });
   const body = await request.json();
   const topic = String(body.topic || '').trim();
   const audience = String(body.audience || 'people looking for practical ways to earn').trim();
@@ -29,17 +29,24 @@ Rules:
 - Make the article genuinely useful and actionable.
 - Do not include a JSON code fence.`;
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
+  const model = process.env.GEMINI_ARTICLE_MODEL || 'gemini-3.1-flash-lite';
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: process.env.OPENAI_ARTICLE_MODEL || 'gpt-5.6-luna', input: prompt })
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.7
+      }
+    })
   });
   if (!response.ok) {
     const detail = await response.text();
-    return NextResponse.json({ error: `AI generation failed: ${detail.slice(0, 300)}` }, { status: 502 });
+    return NextResponse.json({ error: `Gemini generation failed: ${detail.slice(0, 300)}` }, { status: 502 });
   }
   const result = await response.json();
-  const text = result.output_text || result.output?.flatMap((item:any)=>item.content||[]).map((x:any)=>x.text||'').join('') || '';
+  const text = result.candidates?.[0]?.content?.parts?.map((part:any) => part.text || '').join('') || '';
   try { return NextResponse.json(JSON.parse(text)); }
   catch { return NextResponse.json({ error: 'The AI returned an unexpected format. Please generate again.' }, { status: 502 }); }
 }
