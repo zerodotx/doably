@@ -37,8 +37,9 @@ export async function GET(r: NextRequest) {
       )`;
     });
 
-    const whereSql = conditions.reduce((acc, condition) =>
-      acc ? sql`(${acc} OR ${condition})` : condition
+    const whereSql = conditions.slice(1).reduce(
+      (acc, condition) => sql`(${acc} OR ${condition})`,
+      conditions[0]
     );
 
     const rows = await sql`
