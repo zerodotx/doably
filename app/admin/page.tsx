@@ -15,7 +15,7 @@ type SearchTerm={id:number;term:string;skill_id?:number|null;skill_name?:string|
 type Setting={key:string;value:string};
 type BlogArticle={id:number;title:string;slug:string;excerpt:string;content:string;seo_title:string;meta_description:string;category_id?:number|null;category_name?:string|null;status:string;created_at:string;updated_at:string};
 type Data={skills:Skill[];categories:Category[];links:LinkItem[];subscribers:Subscriber[];searchTerms:SearchTerm[];settings:Setting[];blogArticles:BlogArticle[]};
-type Tab='overview'|'skills'|'paths'|'articles'|'article-studio'|'subscribers'|'search'|'monetization'|'settings';
+type Tab='overview'|'skills'|'paths'|'articles'|'links'|'article-studio'|'subscribers'|'search'|'monetization'|'settings';
 
 const empty:Data={skills:[],categories:[],links:[],subscribers:[],searchTerms:[],settings:[],blogArticles:[]};
 
