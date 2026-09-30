@@ -13,10 +13,11 @@ type LinkItem={id:number;category_id:number;category_name:string;title:string;ur
 type Subscriber={id:number;email:string;created_at:string};
 type SearchTerm={id:number;term:string;skill_id?:number|null;skill_name?:string|null};
 type Setting={key:string;value:string};
-type Data={skills:Skill[];categories:Category[];links:LinkItem[];subscribers:Subscriber[];searchTerms:SearchTerm[];settings:Setting[]};
-type Tab='overview'|'skills'|'paths'|'articles'|'subscribers'|'search'|'monetization'|'settings';
+type BlogArticle={id:number;title:string;slug:string;excerpt:string;content:string;seo_title:string;meta_description:string;category_id?:number|null;category_name?:string|null;status:string;created_at:string;updated_at:string};
+type Data={skills:Skill[];categories:Category[];links:LinkItem[];subscribers:Subscriber[];searchTerms:SearchTerm[];settings:Setting[];blogArticles:BlogArticle[]};
+type Tab='overview'|'skills'|'paths'|'articles'|'article-studio'|'subscribers'|'search'|'monetization'|'settings';
 
-const empty:Data={skills:[],categories:[],links:[],subscribers:[],searchTerms:[],settings:[]};
+const empty:Data={skills:[],categories:[],links:[],subscribers:[],searchTerms:[],settings:[],blogArticles:[]};
 
 export default function Admin(){
   const [ok,setOk]=useState(false),[pw,setPw]=useState(''),[data,setData]=useState<Data>(empty);
@@ -36,11 +37,11 @@ export default function Admin(){
   const articles=useMemo(()=>data.links.filter(x=>(x.title+' '+x.category_name+' '+(x.source||'')).toLowerCase().includes(q)),[data.links,q]);
   const subs=useMemo(()=>data.subscribers.filter(x=>x.email.toLowerCase().includes(q)),[data.subscribers,q]);
   const terms=useMemo(()=>data.searchTerms.filter(x=>(x.term+' '+(x.skill_name||'')).toLowerCase().includes(q)),[data.searchTerms,q]);
-  const nav=[['overview','Overview',LayoutDashboard],['skills','Skills',Sparkles],['paths','Earning paths',FolderKanban],['articles','Articles',FileText],['subscribers','Subscribers',Users],['search','Search',Search],['monetization','Monetization',Megaphone],['settings','Settings',Settings2]] as const;
+  const nav=[['overview','Overview',LayoutDashboard],['skills','Skills',Sparkles],['paths','Earning paths',FolderKanban],['articles','Resources',Link2],['article-studio','Article Studio',FileText],['subscribers','Subscribers',Users],['search','Search',Search],['monetization','Monetization',Megaphone],['settings','Settings',Settings2]] as const;
   if(!ok)return <main className="admin-app admin-login-page"><div className="admin-login-card"><div className="admin-brand">doably <Sparkles size={17}/></div><div className="admin-login-icon"><LayoutDashboard size={25}/></div><h1>Welcome back</h1><p>Manage Doably content, search, subscribers and site settings.</p><form onSubmit={login}><label>Admin password</label><div className="admin-input-wrap"><Settings2 size={17}/><input type="password" placeholder="Enter your password" value={pw} onChange={e=>setPw(e.target.value)} autoFocus/></div><button className="admin-primary" disabled={saving}>{saving?'Signing in…':'Sign in'} <ChevronRight size={17}/></button></form><a className="admin-back" href="/">← Back to Doably</a></div></main>;
 
   const title=tab==='overview'?'Dashboard':tab==='paths'?'Earning paths':tab.charAt(0).toUpperCase()+tab.slice(1);
-  const counts={skills:data.skills.length,paths:data.categories.length,articles:data.links.length,subscribers:data.subscribers.length,search:data.searchTerms.length};
+  const counts={skills:data.skills.length,paths:data.categories.length,articles:data.links.length,'article-studio':data.blogArticles.length,subscribers:data.subscribers.length,search:data.searchTerms.length};
 
   return <main className="admin-app">
     <aside className="admin-sidebar">
@@ -73,7 +74,7 @@ export default function Admin(){
         </div>
       </div>}
 
-      {tab!=='overview'&&<div className="admin-content">
+      {tab==='article-studio'?<div className="admin-content"><ArticleStudio data={data} load={load} del={del}/>:tab!=='overview'&&<div className="admin-content">
         {(tab==='monetization'||tab==='settings')?<SettingsPanel tab={tab} data={data} openForm={()=>openForm(tab)} load={load}/>:tab==='subscribers'?<ListPanel title="Subscribers" count={subs.length} query={query} setQuery={setQuery} placeholder="Search email…" rows={subs.map(x=><div className="admin-list-row" key={x.id}><span className="admin-row-icon green"><Users size={17}/></span><div><b>{x.email}</b><small>Subscribed {new Date(x.created_at).toLocaleDateString()}</small></div><button className="icon-danger" onClick={()=>del('subscriber',x.id)}><Trash2 size={16}/></button></div>)} />:
         tab==='search'?<ListPanel title="Search terms" count={terms.length} query={query} setQuery={setQuery} placeholder="Search terms…" add={()=>openForm('search')} rows={terms.map(x=><div className="admin-list-row" key={x.id}><span className="admin-row-icon purple"><Search size={17}/></span><div><b>{x.term}</b><small>{x.skill_name||'No skill linked'}</small></div><button className="icon-danger" onClick={()=>del('searchTerm',x.id)}><Trash2 size={16}/></button></div>)}/>:
         <ListPanel title={tab==='skills'?'Skills':tab==='paths'?'Earning paths':'Articles'} count={tab==='skills'?skills.length:tab==='paths'?paths.length:articles.length} query={query} setQuery={setQuery} placeholder={tab==='articles'?'Search articles…':'Search…'} add={()=>openForm(tab)} rows={tab==='skills'?skills.map(x=><div className="admin-list-row" key={x.id}><span className="admin-row-icon green"><Sparkles size={17}/></span><div><b>{x.name}</b><small>/{x.slug}</small></div><button className="icon-danger" onClick={()=>del('skill',x.id)}><Trash2 size={16}/></button></div>):tab==='paths'?paths.map(x=><div className="admin-list-row" key={x.id}><span className="admin-row-icon purple"><FolderKanban size={17}/></span><div><b>{x.name}</b><small>{x.description}</small></div><button className="icon-danger" onClick={()=>del('category',x.id)}><Trash2 size={16}/></button></div>):articles.map(x=><div className="admin-list-row" key={x.id}><span className="admin-row-icon orange"><FileText size={17}/></span><div className="admin-link-copy"><b>{x.title}</b><small>{x.description||'No description'} · {x.category_name}</small><small>{x.source||'External resource'}</small><a href={x.url} target="_blank" rel="noreferrer">{x.url}</a></div><button className="icon-danger" onClick={()=>del('link',x.id)}><Trash2 size={16}/></button></div>)}/>}
@@ -102,4 +103,43 @@ function SettingsPanel({tab,data,openForm,load}:{tab:'monetization'|'settings';d
   const isMoney=tab==='monetization';
   const items=isMoney?data.settings.filter(x=>['smartlink_url','banner_enabled','smartlink_enabled'].includes(x.key)):data.settings.filter(x=>!['smartlink_url','banner_enabled','smartlink_enabled'].includes(x.key));
   return <section className="admin-panel"><div className="admin-panel-head"><div><span className="admin-eyebrow">{isMoney?'Revenue controls':'Site controls'}</span><h3>{isMoney?'Monetization':'Settings'}</h3></div><button className="admin-primary compact" onClick={openForm}><Plus size={16}/> Add setting</button></div><div className="admin-settings-list">{items.length?items.map(x=><div className="admin-setting-row" key={x.key}><div><b>{x.key}</b><small>{x.value||'Empty'}</small></div><button className="admin-setting-edit" onClick={()=>alert('Edit this setting by adding the same key again. The value will be updated.')}>Manage</button></div>):<div className="admin-empty"><Settings2 size={22}/><b>No settings yet</b><span>Add a setting to control this area.</span></div>}</div></section>;
+}
+
+function ArticleStudio({data,load,del}:{data:Data;load:()=>Promise<void>;del:(type:string,id:number)=>Promise<void>}){
+  const blank={id:'',title:'',slug:'',excerpt:'',content:'',seoTitle:'',metaDescription:'',categoryId:'',status:'draft',topic:'',audience:'people looking for practical ways to earn',tone:'helpful, natural and practical',length:'1200 words'};
+  const [form,setForm]=useState<Record<string,string>>(blank),[generating,setGenerating]=useState(false),[saving,setSaving]=useState(false),[editing,setEditing]=useState(false),[q,setQ]=useState('');
+  const articles=data.blogArticles.filter(a=>(a.title+' '+a.category_name+' '+a.status).toLowerCase().includes(q.toLowerCase()));
+  function edit(a:BlogArticle){setForm({id:String(a.id),title:a.title,slug:a.slug,excerpt:a.excerpt,content:a.content,seoTitle:a.seo_title,metaDescription:a.meta_description,categoryId:String(a.category_id||''),status:a.status,...blank,topic:a.title,audience:blank.audience,tone:blank.tone,length:blank.length});setEditing(true);window.scrollTo({top:0,behavior:'smooth'})}
+  function slugify(v:string){return v.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+  async function generate(e:React.FormEvent){e.preventDefault();setGenerating(true);const r=await fetch('/api/admin/article-generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({topic:form.topic,audience:form.audience,tone:form.tone,length:form.length})});const b=await r.json().catch(()=>({}));setGenerating(false);if(!r.ok){alert(b.error||'Generation failed.');return}setForm(f=>({...f,title:b.title||f.topic,slug:b.slug||slugify(b.title||f.topic),excerpt:b.excerpt||'',content:b.content||'',seoTitle:b.seoTitle||b.title||'',metaDescription:b.metaDescription||b.excerpt||''}));setEditing(true)}
+  async function save(e:React.FormEvent){e.preventDefault();setSaving(true);const payload={type:editing&&form.id?'updateBlogArticle':'blogArticle',...form};const r=await fetch('/api/admin/data',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});const b=await r.json().catch(()=>({}));setSaving(false);if(!r.ok){alert(b.error||'Could not save article.');return}setForm(blank);setEditing(false);await load()}
+  return <div className="article-studio">
+    <div className="studio-hero"><div><span className="admin-eyebrow">AI writing workspace</span><h2>Create articles without leaving Doably.</h2><p>Generate a first draft, edit it, optimize the SEO fields, then save it as a draft or publish it when ready.</p></div><Sparkles size={48}/></div>
+    <div className="studio-grid">
+      <section className="admin-panel studio-generator"><div className="admin-panel-head"><div><span className="admin-eyebrow">Generate</span><h3>Article brief</h3></div></div>
+        <form onSubmit={generate} className="admin-modal-form studio-form">
+          <label>Topic<input required value={form.topic} onChange={e=>setForm({...form,topic:e.target.value})} placeholder="e.g. How to make money with drawing skills"/></label>
+          <label>Audience<input value={form.audience} onChange={e=>setForm({...form,audience:e.target.value})}/></label>
+          <div className="admin-form-grid"><label>Tone<select value={form.tone} onChange={e=>setForm({...form,tone:e.target.value})}><option>helpful, natural and practical</option><option>friendly and conversational</option><option>professional and informative</option></select></label><label>Length<select value={form.length} onChange={e=>setForm({...form,length:e.target.value})}><option>800 words</option><option>1200 words</option><option>1800 words</option><option>2500 words</option></select></label></div>
+          <button className="admin-primary" disabled={generating}>{generating?'Generating…':'Generate article'} <Sparkles size={16}/></button>
+        </form>
+      </section>
+      <section className="admin-panel studio-editor"><div className="admin-panel-head"><div><span className="admin-eyebrow">{editing?'Edit draft':'Editor'}</span><h3>{form.title||'Your article will appear here'}</h3></div></div>
+        <form onSubmit={save} className="admin-modal-form">
+          <label>Title<input value={form.title} onChange={e=>setForm({...form,title:e.target.value,slug:form.slug||slugify(e.target.value)})} placeholder="Article title"/></label>
+          <label>Slug<input value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} placeholder="article-slug"/></label>
+          <label>Excerpt<textarea value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})} placeholder="Short summary"/></label>
+          <label>Article content<textarea className="article-content-editor" value={form.content} onChange={e=>setForm({...form,content:e.target.value})} placeholder="Write or generate your article in Markdown…"/></label>
+          <label>Earning path<select value={form.categoryId} onChange={e=>setForm({...form,categoryId:e.target.value})}><option value="">No path</option>{data.categories.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+          <div className="admin-form-grid"><label>SEO title<input value={form.seoTitle} onChange={e=>setForm({...form,seoTitle:e.target.value})}/></label><label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="draft">Draft</option><option value="published">Published</option></select></label></div>
+          <label>Meta description<textarea value={form.metaDescription} onChange={e=>setForm({...form,metaDescription:e.target.value})}/></label>
+          <div className="admin-modal-actions"><button type="button" className="admin-cancel" onClick={()=>{setForm(blank);setEditing(false)}}>Clear</button><button className="admin-primary" disabled={saving}>{saving?'Saving…':editing?'Update article':'Save article'} <ChevronRight size={16}/></button></div>
+        </form>
+      </section>
+    </div>
+    <section className="admin-panel studio-library"><div className="admin-panel-head"><div><span className="admin-eyebrow">Your content</span><h3>Article library</h3></div><small>{articles.length} articles</small></div>
+      <div className="admin-list-toolbar admin-inner-toolbar"><div className="admin-search"><Search size={17}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search your articles…"/></div></div>
+      <div className="admin-list">{articles.length?articles.map(a=><div className="admin-list-row" key={a.id}><span className="admin-row-icon purple"><FileText size={17}/></span><div className="admin-link-copy"><b>{a.title}</b><small>{a.status} · {a.category_name||'No earning path'}</small><small>{a.excerpt||'No excerpt'}</small></div><button className="admin-setting-edit" onClick={()=>edit(a)}>Edit</button><button className="icon-danger" onClick={()=>del('blogArticle',a.id)}><Trash2 size={16}/></button></div>):<div className="admin-empty"><FileText size={22}/><b>No managed articles yet</b><span>Generate your first article above.</span></div>}</div>
+    </section>
+  </div>
 }
