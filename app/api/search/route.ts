@@ -37,12 +37,16 @@ export async function GET(r: NextRequest) {
       )`;
     });
 
+    const whereSql = terms.length === 1
+      ? conditions[0]
+      : sql`(${sql.join(conditions, sql` OR `)})`;
+
     const rows = await sql`
       SELECT DISTINCT s.name AS skill_name, c.id AS category_id, c.name AS category_name, c.description
       FROM skills s
       JOIN skill_categories sc ON sc.skill_id = s.id
       JOIN categories c ON c.id = sc.category_id
-      WHERE ${sql.join(conditions, sql` OR `)}
+      WHERE ${whereSql}
       ORDER BY c.name
       LIMIT 12
     `;
