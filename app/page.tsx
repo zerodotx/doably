@@ -9,6 +9,7 @@ type LinkResult = {
   url: string;
   source?: string | null;
   description?: string | null;
+  internal?: boolean;
 };
 
 type SearchResult = {
@@ -136,7 +137,7 @@ export default function Home() {
                   <p className="result-description">{result.description}</p>
                   <div className="article-list">
                     {result.links.slice(0, 3).map((link) => (
-                      <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                      <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
                         <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'External resource'}</small></div>
                         <ArrowRight size={16} />
                       </a>
