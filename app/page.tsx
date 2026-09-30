@@ -1,86 +1,193 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { ArrowRight, Compass, Lightbulb, Menu, Search, Sparkles, X } from 'lucide-react';
+import { FormEvent, useState } from 'react';
+import { ArrowRight, CheckCircle2, Search, Sparkles, X } from 'lucide-react';
 
-const ideas = [
-  { icon:'✍️', title:'Writing', text:'Turn your writing ability into useful freelance work.', tags:['Content writing','Copywriting','Editing'] },
-  { icon:'🎨', title:'Design', text:'Use your eye for visuals to create things people pay for.', tags:['Social posts','Logos','Thumbnails'] },
-  { icon:'🎬', title:'Video editing', text:'Help creators and businesses turn raw clips into finished videos.', tags:['Shorts','Reels','YouTube'] },
-  { icon:'🍳', title:'Cooking', text:'Your cooking skills can become services, products, or content.', tags:['Home orders','Recipes','Content'] },
-  { icon:'🗣️', title:'English', text:'Use your communication skills to help people learn or work.', tags:['Tutoring','Conversation','Translation'] },
-  { icon:'📱', title:'Social media', text:'Help small businesses show up consistently online.', tags:['Posts','Pages','Content plans'] },
-];
+type LinkResult = {
+  id: number;
+  title: string;
+  url: string;
+  source?: string | null;
+  description?: string | null;
+};
+
+type SearchResult = {
+  skill_name: string;
+  category_id: number;
+  category_name: string;
+  description: string;
+  links: LinkResult[];
+};
+
+const suggestions = ['I can draw', 'I can cook', 'I can write', 'I can teach', 'I can edit videos'];
 
 export default function Home() {
-  const [input, setInput] = useState('');
-  const [showIdeas, setShowIdeas] = useState(false);
-  const [menu, setMenu] = useState(false);
-  const [mode, setMode] = useState<'skill'|'help'>('skill');
-  const filtered = useMemo(() => {
-    const q = input.toLowerCase().trim();
-    if (!q) return ideas;
-    return ideas.filter(i => `${i.title} ${i.text} ${i.tags.join(' ')}`.toLowerCase().includes(q));
-  }, [input]);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpStep, setHelpStep] = useState(0);
+  const [helpAnswers, setHelpAnswers] = useState<string[]>([]);
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+
+  async function search(value = query) {
+    const q = value.trim();
+    if (!q) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setSearched(true);
+    try {
+      const response = await fetch('/api/search?q=' + encodeURIComponent(q));
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || 'Search is temporarily unavailable.');
+      setResults(body.results || []);
+    } catch (err) {
+      setResults([]);
+      setError(err instanceof Error ? err.message : 'Search is temporarily unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function submitSearch(e: FormEvent) {
+    e.preventDefault();
+    search();
+  }
+
+  function chooseSuggestion(value: string) {
+    setQuery(value);
+    search(value);
+  }
+
+  function startHelp() {
+    setHelpOpen(true);
+    setHelpStep(0);
+    setHelpAnswers([]);
+    setSearched(false);
+    setResults([]);
+  }
+
+  const questions = [
+    'What do you enjoy doing most?',
+    'What are you already comfortable with?',
+    'What would you like to try earning from?'
+  ];
+
+  function answerHelp(answer: string) {
+    const next = [...helpAnswers, answer];
+    setHelpAnswers(next);
+    if (helpStep < questions.length - 1) {
+      setHelpStep(helpStep + 1);
+    } else {
+      const combined = next.join(', ');
+      setQuery(combined);
+      setHelpOpen(false);
+      search(combined);
+    }
+  }
 
   return (
     <main>
-      <header className="nav">
-        <a className="brand" href="#top"><span className="brand-dot">D</span>doably</a>
-        <nav className={menu ? 'nav-links open' : 'nav-links'}>
-          <a href="#tool" onClick={()=>setMenu(false)}>Find your thing</a>
-          <a href="#ideas" onClick={()=>setMenu(false)}>Ideas</a>
-          <a href="#how" onClick={()=>setMenu(false)}>How it works</a>
-        </nav>
-        <button className="menu-btn" aria-label="Menu" onClick={()=>setMenu(!menu)}>{menu ? <X/> : <Menu/>}</button>
+      <header className="simple-nav">
+        <a className="simple-brand" href="/">doably</a>
+        <button className="subscribe-btn" onClick={() => setSubscribeOpen(true)}>Subscribe</button>
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-copy">
-          <div className="eyebrow"><Sparkles size={15}/> Find your thing</div>
-          <h1>You can do more<br/><span>than you think.</span></h1>
-          <p>Tell Doably what you can do — or what you like — and discover practical ways you could turn it into income.</p>
-          <div className="hero-actions">
-            <a className="primary" href="#tool">Start exploring <ArrowRight size={18}/></a>
-            <a className="secondary" href="#ideas">Browse ideas</a>
+      <section className="search-hero">
+        <div className="search-hero-inner">
+          <div className="search-mark"><Sparkles size={17} /></div>
+          <h1>What can you do?</h1>
+          <p>Discover what you can do with what you know.</p>
+
+          <form className="google-search" onSubmit={submitSearch}>
+            <Search size={20} />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search what you can do..." aria-label="Search what you can do" />
+            {query && <button type="button" className="clear-search" onClick={() => { setQuery(''); setResults([]); setSearched(false); }} aria-label="Clear search"><X size={17} /></button>}
+          </form>
+
+          <div className="search-actions">
+            <button className="search-action primary-search" onClick={() => search()} disabled={loading}>{loading ? 'Searching…' : 'Search'}</button>
+            <button className="search-action" onClick={startHelp}>I don&apos;t know my skill</button>
           </div>
-        </div>
-        <div className="hero-art" aria-hidden="true">
-          <div className="orb orb-a"/><div className="orb orb-b"/>
-          <div className="float-card card-one"><span>🎨</span><div><b>Design</b><small>Logo & social work</small></div></div>
-          <div className="float-card card-two"><span>🎥</span><div><b>Video</b><small>Editing & short-form</small></div></div>
-          <div className="center-note"><Lightbulb size={26}/><b>There’s probably<br/>something in there.</b></div>
+
+          {!searched && (
+            <div className="search-suggestions">
+              <span>Try</span>
+              {suggestions.map((item) => <button key={item} onClick={() => chooseSuggestion(item)}>{item}</button>)}
+            </div>
+          )}
+
+          {searched && (
+            <section className="search-results" aria-live="polite">
+              {loading && <div className="search-state">Finding useful paths…</div>}
+              {!loading && error && <div className="search-state error-state">{error}</div>}
+              {!loading && !error && results.length === 0 && (
+                <div className="search-state"><b>No matches yet.</b><span>Try describing what you can do in a few words, like “I can draw” or “I know Excel”.</span></div>
+              )}
+              {!loading && !error && results.map((result) => (
+                <article className="result-card" key={result.category_id}>
+                  <div className="result-pill">{result.category_name}</div>
+                  <p className="result-description">{result.description}</p>
+                  <div className="article-list">
+                    {result.links.slice(0, 3).map((link) => (
+                      <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                        <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'External resource'}</small></div>
+                        <ArrowRight size={16} />
+                      </a>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </section>
+          )}
         </div>
       </section>
 
-      <section className="tool-section" id="tool">
-        <div className="section-kicker">01 / Start here</div>
-        <h2>What can you do?</h2>
-        <p className="section-lead">No perfect answer needed. Just tell us what comes to mind.</p>
-        <div className="tool-card">
-          <div className="mode-tabs">
-            <button className={mode==='skill'?'active':''} onClick={()=>setMode('skill')}><Compass size={17}/> I know what I can do</button>
-            <button className={mode==='help'?'active':''} onClick={()=>setMode('help')}><Sparkles size={17}/> Help me find my thing</button>
-          </div>
-          {mode === 'skill' ? <>
-            <label htmlFor="skill">I can…</label>
-            <div className="search-box"><Search size={20}/><input id="skill" value={input} onChange={e=>{setInput(e.target.value);setShowIdeas(true)}} onFocus={()=>setShowIdeas(true)} placeholder="e.g. I can draw, cook, edit videos…"/><button onClick={()=>setShowIdeas(true)}>Find ideas <ArrowRight size={17}/></button></div>
-            <div className="chips"><span>Try:</span>{['draw','cook','write','teach','edit videos'].map(x=><button key={x} onClick={()=>{setInput(`I can ${x}`);setShowIdeas(true)}}>{x}</button>)}</div>
-            {showIdeas && <div className="results"><div className="results-head"><b>{input ? `Ideas related to “${input}”` : 'Popular starting points'}</b><button onClick={()=>setShowIdeas(false)}>Close</button></div>{filtered.slice(0,3).map(i=><div className="mini-result" key={i.title}><span>{i.icon}</span><div><b>{i.title}</b><small>{i.text}</small></div><ArrowRight size={17}/></div>)}{filtered.length===0 && <div className="empty">We don't have a match yet — try describing what you enjoy doing.</div>}</div>}
-          </> : <div className="help-box"><div className="help-icon"><Sparkles/></div><div><h3>Let’s figure it out together.</h3><p>A few simple questions about what you enjoy, what you're comfortable with, and what you'd like to learn.</p><button className="primary" onClick={()=>alert('Question flow coming next.')}>Let’s start <ArrowRight size={17}/></button></div></div>}
+      {helpOpen && (
+        <div className="help-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setHelpOpen(false); }}>
+          <section className="help-modal" role="dialog" aria-modal="true">
+            <button className="help-close" onClick={() => setHelpOpen(false)} aria-label="Close"><X size={18} /></button>
+            <span className="help-step">Question {helpStep + 1} of {questions.length}</span>
+            <h2>{questions[helpStep]}</h2>
+            <p>There&apos;s no wrong answer. Pick what feels closest.</p>
+            <div className="help-options">
+              {(helpStep === 0
+                ? ['Creating things', 'Helping people', 'Working with computers', 'Teaching or explaining']
+                : helpStep === 1
+                  ? ['I already have a useful skill', 'I learn quickly', 'I like trying new things', 'I am not sure yet']
+                  : ['Freelance work', 'A small side income', 'Online work', 'I just want ideas']
+              ).map((option) => <button key={option} onClick={() => answerHelp(option)}>{option}<ArrowRight size={16} /></button>)}
+            </div>
+          </section>
         </div>
-      </section>
+      )}
 
-      <section className="ideas-section" id="ideas">
-        <div className="section-kicker">02 / Get inspired</div>
-        <div className="heading-row"><div><h2>Not sure yet?</h2><p className="section-lead">Here are a few things people can turn into something useful.</p></div><a className="text-link" href="#tool">Find mine <ArrowRight size={16}/></a></div>
-        <div className="idea-grid">{ideas.map(i=><article className="idea-card" key={i.title}><div className="idea-icon">{i.icon}</div><h3>{i.title}</h3><p>{i.text}</p><div className="tags">{i.tags.map(t=><span key={t}>{t}</span>)}</div><a href="#tool">See ways to start <ArrowRight size={15}/></a></article>)}</div>
-      </section>
+      {subscribeOpen && (
+        <div className="help-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubscribeOpen(false); }}>
+          <section className="subscribe-modal" role="dialog" aria-modal="true">
+            <button className="help-close" onClick={() => setSubscribeOpen(false)} aria-label="Close"><X size={18} /></button>
+            <CheckCircle2 size={25} />
+            <h2>Stay in the loop</h2>
+            <p>Get useful new earning ideas when Doably adds them.</p>
+            <form onSubmit={(e) => { e.preventDefault(); setSubscribeOpen(false); }}>
+              <input type="email" required placeholder="Your email address" aria-label="Email address" />
+              <button className="search-action primary-search">Subscribe</button>
+            </form>
+            <small>You can unsubscribe anytime.</small>
+          </section>
+        </div>
+      )}
 
-      <section className="how" id="how"><div className="section-kicker">03 / Simple by design</div><h2>From “I can…” to “I could do that.”</h2><div className="steps"><div><b>01</b><h3>Tell us what you can do</h3><p>Use your own words. No CV or fancy labels needed.</p></div><div><b>02</b><h3>Explore your options</h3><p>See practical ways your skills and interests can be useful.</p></div><div><b>03</b><h3>Choose a place to start</h3><p>Get a simple next step, useful resources, and guides.</p></div></div></section>
-
-      <section className="ad-slot"><span>ADVERTISEMENT</span></section>
-      <footer><div className="brand"><span className="brand-dot">D</span>doably</div><p>Find what you can do. Find a way to earn from it.</p><span>© 2026 Doably</span></footer>
+      <footer className="simple-footer">
+        <div><a href="/about">About</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/disclaimer">Disclaimer</a></div>
+        <span>© 2026 Doably</span>
+      </footer>
     </main>
   );
 }
