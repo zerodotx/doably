@@ -19,8 +19,8 @@ export default async function SkillArchive({ params }: SkillPageProps) {
   `;
   if (!skills.length) notFound();
 
-  const skill = skills[0];
-  const paths = await sql`
+  const skill: any = skills[0];
+  const paths: any[] = await sql`
     SELECT c.id, c.name, c.slug, c.description
     FROM categories c
     JOIN skill_categories sc ON sc.category_id = c.id
@@ -28,7 +28,7 @@ export default async function SkillArchive({ params }: SkillPageProps) {
     ORDER BY c.name
   `;
 
-  const pathData = [];
+  const pathData: any[] = [];
   for (const path of paths) {
     const links = await sql`
       SELECT id, title, url, source, description
