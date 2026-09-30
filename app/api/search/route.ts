@@ -54,14 +54,30 @@ export async function GET(r: NextRequest) {
 
     const results = [];
     for (const row of rows) {
-      const links = await sql`
+      const articles = await sql`
+        SELECT id, title, slug, excerpt AS description, views
+        FROM blog_articles
+        WHERE category_id = ${row.category_id} AND status = 'published'
+        ORDER BY views DESC, updated_at DESC, id DESC
+        LIMIT 2
+      `;
+      const externalLimit = articles.length >= 2 ? 1 : 3 - articles.length;
+      const external = await sql`
         SELECT id, title, url, source, description
         FROM links
         WHERE category_id = ${row.category_id} AND is_active = TRUE
         ORDER BY priority DESC, id ASC
-        LIMIT 3
+        LIMIT ${externalLimit}
       `;
-      results.push({ ...row, links });
+      const articleLinks = articles.map((article: any) => ({
+        id: `article-${article.id}`,
+        title: article.title,
+        url: `/blog/${article.slug}`,
+        source: 'Doably',
+        description: article.description || null,
+        internal: true
+      }));
+      results.push({ ...row, links: [...articleLinks, ...external] });
     }
 
     return NextResponse.json({ results });
