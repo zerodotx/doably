@@ -132,7 +132,7 @@ export default function Home() {
               )}
               {!loading && !error && results.map((result) => (
                 <article className="result-card" key={result.category_id}>
-                  <div className="result-pill">{result.category_name}</div>
+                  <a className="result-pill result-skill-link" href={`/skills/${result.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}>{result.category_name}</a>
                   <p className="result-description">{result.description}</p>
                   <div className="article-list">
                     {result.links.slice(0, 3).map((link) => (
