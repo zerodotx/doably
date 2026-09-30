@@ -175,8 +175,16 @@ export default function Home() {
             <CheckCircle2 size={25} />
             <h2>Stay in the loop</h2>
             <p>Get useful new earning ideas when Doably adds them.</p>
-            <form onSubmit={(e) => { e.preventDefault(); setSubscribeOpen(false); }}>
-              <input type="email" required placeholder="Your email address" aria-label="Email address" />
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget;
+              const email = new FormData(form).get('email');
+              const response = await fetch('/api/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) });
+              if (!response.ok) { const body = await response.json().catch(() => ({})); alert(body.error || 'Could not subscribe.'); return; }
+              form.reset();
+              setSubscribeOpen(false);
+            }}>
+              <input name="email" type="email" required placeholder="Your email address" aria-label="Email address" />
               <button className="search-action primary-search">Subscribe</button>
             </form>
             <small>You can unsubscribe anytime.</small>
