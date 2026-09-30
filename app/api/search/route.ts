@@ -29,6 +29,11 @@ export async function GET(r: NextRequest) {
             AND l.is_active = TRUE
             AND (LOWER(l.title) LIKE ${x} OR LOWER(COALESCE(l.description, '')) LIKE ${x})
         )
+        OR EXISTS (
+          SELECT 1 FROM search_terms st
+          WHERE LOWER(st.term) LIKE ${x}
+            AND (st.skill_id IS NULL OR st.skill_id = s.id)
+        )
       )`;
     });
 
