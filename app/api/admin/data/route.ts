@@ -12,6 +12,7 @@ export async function GET(){
     sql`SELECT l.*,c.name AS category_name FROM links l JOIN categories c ON c.id=l.category_id ORDER BY c.name,l.priority DESC,l.id`,
     sql`SELECT * FROM subscribers ORDER BY created_at DESC`,
     sql`SELECT st.*,s.name AS skill_name FROM search_terms st LEFT JOIN skills s ON s.id=st.skill_id ORDER BY st.term`,
+    sql`SELECT * FROM site_settings ORDER BY key`,
     sql`SELECT b.*,c.name AS category_name FROM blog_articles b LEFT JOIN categories c ON c.id=b.category_id ORDER BY b.updated_at DESC`
   ]);
   return NextResponse.json({skills,categories,links,subscribers,searchTerms,settings,blogArticles});
