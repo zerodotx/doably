@@ -23,7 +23,7 @@ import {
 
 type Skill = { id: number; name: string; slug: string };
 type Category = { id: number; name: string; slug: string; description: string };
-type Link = { id: number; category_id: number; category_name: string; title: string; url: string; source?: string | null; priority?: number };
+type Link = { id: number; category_id: number; category_name: string; title: string; url: string; source?: string | null; description?: string | null; priority?: number };
 
 type Data = { skills: Skill[]; categories: Category[]; links: Link[] };
 type Tab = 'overview' | 'skills' | 'categories' | 'links';
@@ -300,7 +300,7 @@ export default function Admin() {
                   {tab === 'links' && filteredLinks.map((x) => (
                     <div className="admin-list-row" key={x.id}>
                       <span className="admin-row-icon orange"><FileText size={17} /></span>
-                      <div className="admin-link-copy"><b>{x.title}</b><small>{x.category_name} · {x.source || 'External resource'}</small><a href={x.url} target="_blank" rel="noreferrer">{x.url}</a></div>
+                      <div className="admin-link-copy"><b>{x.title}</b>{x.description && <small className="admin-link-description">{x.description}</small>}<small>{x.category_name} · {x.source || 'External resource'}</small><a href={x.url} target="_blank" rel="noreferrer">{x.url}</a></div>
                       <button className="icon-danger" onClick={() => del('link', x.id)} title="Delete"><Trash2 size={16} /></button>
                     </div>
                   ))}
@@ -341,6 +341,7 @@ export default function Admin() {
               {tab === 'links' && <>
                 <label>Category<select required value={form.categoryId || ''} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}><option value="">Choose an earning path…</option>{data.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
                 <label>Article title<input required placeholder="e.g. How to sell your illustrations" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
+                <label>Description<textarea required placeholder="Short description shown under the article title." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
                 <label>Article URL<input required type="url" placeholder="https://example.com/article" value={form.url || ''} onChange={(e) => setForm({ ...form, url: e.target.value })} /></label>
                 <div className="admin-form-grid"><label>Source<input placeholder="e.g. Forbes" value={form.source || ''} onChange={(e) => setForm({ ...form, source: e.target.value })} /></label><label>Priority<input type="number" placeholder="0" value={form.priority || '0'} onChange={(e) => setForm({ ...form, priority: e.target.value })} /></label></div>
               </>}
