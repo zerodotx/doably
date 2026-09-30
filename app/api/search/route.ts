@@ -37,9 +37,9 @@ export async function GET(r: NextRequest) {
       )`;
     });
 
-    const whereSql = terms.length === 1
-      ? conditions[0]
-      : sql`(${sql.join(conditions, sql` OR `)})`;
+    const whereSql = conditions.reduce((acc, condition) =>
+      acc ? sql`(${acc} OR ${condition})` : condition
+    );
 
     const rows = await sql`
       SELECT DISTINCT s.name AS skill_name, c.id AS category_id, c.name AS category_name, c.description
