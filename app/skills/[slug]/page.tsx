@@ -60,7 +60,7 @@ export default async function SkillArchive({ params }: SkillPageProps) {
             <div className="result-pill">{path.name}</div>
             <p>{path.description}</p>
             <div className="skill-resource-list">
-              {path.links.map((link) => (
+              {path.links.map((link: any) => (
                 <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
                   <div>
                     <b>{link.title}</b>
