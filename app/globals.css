@@ -79,3 +79,6 @@
 .simple-footer div{display:flex;gap:18px;flex-wrap:wrap}
 .simple-footer a:hover{color:#315c4b}
 @media(max-width:600px){.simple-nav{padding:0 18px}.search-hero{padding:55px 15px 70px}.search-hero h1{font-size:38px}.google-search{height:56px}.search-actions{flex-direction:column;width:min(330px,100%);margin-left:auto;margin-right:auto}.search-action{width:100%}.search-suggestions{gap:6px}.result-card{padding:17px}.article-link{padding:13px 2px}.help-modal,.subscribe-modal{padding:27px 20px}.subscribe-modal form{flex-direction:column}.simple-footer{padding:22px 18px;flex-direction:column}}
+
+.admin-inner-toolbar{padding:14px 10px 4px;margin:0}.admin-settings-list{padding:5px 20px 16px}.admin-setting-row{display:flex;align-items:center;gap:15px;padding:15px 0;border-bottom:1px solid #edf0ec}.admin-setting-row>div{flex:1;min-width:0}.admin-setting-row b{display:block;font-size:12px}.admin-setting-row small{display:block;color:#8a948f;font-size:11px;margin-top:4px;overflow:hidden;text-overflow:ellipsis}.admin-setting-edit{border:1px solid #dce2dd;background:#fff;border-radius:8px;padding:7px 10px;font-size:11px;color:#52605a}
+@media(max-width:680px){.admin-inner-toolbar{flex-direction:column}.admin-inner-toolbar .admin-primary{width:100%}.admin-sidebar nav{padding-bottom:6px}.admin-sidebar nav button{flex:none}}
