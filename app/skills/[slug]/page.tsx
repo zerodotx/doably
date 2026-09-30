@@ -30,14 +30,30 @@ export default async function SkillArchive({ params }: SkillPageProps) {
 
   const pathData: any[] = [];
   for (const path of paths) {
-    const links = await sql`
+    const articles = await sql`
+      SELECT id, title, slug, excerpt AS description, views
+      FROM blog_articles
+      WHERE category_id = ${path.id} AND status = 'published'
+      ORDER BY views DESC, updated_at DESC, id DESC
+      LIMIT 2
+    `;
+    const externalLimit = articles.length >= 2 ? 1 : 3 - articles.length;
+    const external = await sql`
       SELECT id, title, url, source, description
       FROM links
       WHERE category_id = ${path.id} AND is_active = TRUE
       ORDER BY priority DESC, id ASC
-      LIMIT 3
+      LIMIT ${externalLimit}
     `;
-    pathData.push({ ...path, links });
+    const articleLinks = articles.map((article: any) => ({
+      id: `article-${article.id}`,
+      title: article.title,
+      url: `/blog/${article.slug}`,
+      source: 'Doably',
+      description: article.description || null,
+      internal: true
+    }));
+    pathData.push({ ...path, links: [...articleLinks, ...external] });
   }
 
   return (
