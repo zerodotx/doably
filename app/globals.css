@@ -82,3 +82,22 @@
 
 .admin-inner-toolbar{padding:14px 10px 4px;margin:0}.admin-settings-list{padding:5px 20px 16px}.admin-setting-row{display:flex;align-items:center;gap:15px;padding:15px 0;border-bottom:1px solid #edf0ec}.admin-setting-row>div{flex:1;min-width:0}.admin-setting-row b{display:block;font-size:12px}.admin-setting-row small{display:block;color:#8a948f;font-size:11px;margin-top:4px;overflow:hidden;text-overflow:ellipsis}.admin-setting-edit{border:1px solid #dce2dd;background:#fff;border-radius:8px;padding:7px 10px;font-size:11px;color:#52605a}
 @media(max-width:680px){.admin-inner-toolbar{flex-direction:column}.admin-inner-toolbar .admin-primary{width:100%}.admin-sidebar nav{padding-bottom:6px}.admin-sidebar nav button{flex:none}}
+
+/* Universal skill archive */
+.skill-archive{min-height:100vh;background:#fbfaf7;color:#18201d}
+.skill-archive-nav{height:72px;max-width:1060px;margin:auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.skill-back-link{font-size:12px;color:#607068;font-weight:700}
+.skill-back-link:hover{color:#315c4b}
+.skill-archive-hero{max-width:760px;margin:auto;text-align:center;padding:62px 20px 38px}
+.skill-kicker{display:block;font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#718079;margin-top:10px}
+.skill-archive-hero h1{font:800 44px Manrope,sans-serif;letter-spacing:-.055em;margin:12px 0 12px}
+.skill-archive-hero p{color:#68736d;font-size:15px;line-height:1.65;margin:0 auto;max-width:600px}
+.skill-path-grid{width:min(1000px,calc(100% - 40px));margin:15px auto 65px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.skill-path-card{background:#fff;border:1px solid #e0e5df;border-radius:18px;padding:22px}
+.skill-path-card>p{text-align:center;color:#68736d;font-size:13px;line-height:1.55;margin:0 auto 17px;min-height:42px}
+.skill-resource-list{border-top:1px solid #edf0ed}
+.skill-empty{width:min(700px,calc(100% - 40px));margin:20px auto 70px;padding:28px;background:#fff;border:1px solid #e0e5df;border-radius:16px;text-align:center;color:#68736d;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.skill-empty b{color:#33413a}
+.result-skill-link{display:block;text-decoration:none}
+.skill-archive-footer{width:min(1060px,calc(100% - 40px))}
+@media(max-width:700px){.skill-archive-hero{padding-top:48px}.skill-archive-hero h1{font-size:36px}.skill-path-grid{grid-template-columns:1fr;width:min(100% - 30px,600px)}.skill-archive-nav{padding:0 18px}.skill-archive-footer{width:100%}}
