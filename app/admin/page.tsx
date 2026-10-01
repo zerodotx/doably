@@ -36,7 +36,9 @@ export default function Admin(){
     const file=e.target.files?.[0];
     e.target.value='';
     if(!file)return;
-    if(!/\\.(xlsx|xls)$/i.test(file.name)){alert('Please choose an Excel .xlsx or .xls file.');return}
+    const fileName=file.name.toLowerCase().trim();
+    const isExcelFile=fileName.endsWith('.xlsx')||fileName.endsWith('.xls');
+    if(!isExcelFile){alert('Please choose an Excel .xlsx or .xls file.');return}
     setImporting(true);
     const body=new FormData();
     body.append('file',file);
