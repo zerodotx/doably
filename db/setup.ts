@@ -6,6 +6,10 @@ export async function ensureDatabase(){
   await sql`CREATE TABLE IF NOT EXISTS skill_categories(id SERIAL PRIMARY KEY,skill_id INTEGER NOT NULL REFERENCES skills(id) ON DELETE CASCADE,category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,UNIQUE(skill_id,category_id))`;
   await sql`CREATE TABLE IF NOT EXISTS links(id SERIAL PRIMARY KEY,category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,title TEXT NOT NULL,url TEXT NOT NULL,source TEXT,description TEXT,priority INTEGER NOT NULL DEFAULT 0,is_active BOOLEAN NOT NULL DEFAULT TRUE,created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
   await sql`ALTER TABLE links ADD COLUMN IF NOT EXISTS description TEXT`;
+  await sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS search_keyword TEXT`;
+  await sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS device_needed TEXT`;
+  await sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS gig_title TEXT`;
+  await sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS earning_range TEXT`;
   await sql`CREATE TABLE IF NOT EXISTS subscribers(id SERIAL PRIMARY KEY,email TEXT NOT NULL UNIQUE,created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
   await sql`CREATE TABLE IF NOT EXISTS search_terms(id SERIAL PRIMARY KEY,term TEXT NOT NULL UNIQUE,skill_id INTEGER REFERENCES skills(id) ON DELETE CASCADE,created_at TIMESTAMP NOT NULL DEFAULT NOW())`;
   await sql`CREATE TABLE IF NOT EXISTS site_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL DEFAULT '')`;
