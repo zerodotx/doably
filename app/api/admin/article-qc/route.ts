@@ -34,7 +34,7 @@ export async function POST(request:NextRequest){
     {key:'subheadings',label:'Subheadings',status:h3>0?'pass':'warn',detail:h3>0?`${h3} H3 subheading${h3===1?'':'s'} detected.`:'No H3 subheadings detected. Add them where they help break down methods or steps.'}
   ];
   const failures=checks.filter(c=>c.status==='fail').length,warnings=checks.filter(c=>c.status==='warn').length;
-  const ready=failures===0&&warnings===0;
-  const summary=ready?'All automated checks passed. Give the article a final human review before publishing.':`${failures} blocking check${failures===1?'':'s'} and ${warnings} warning${warnings===1?'':'s'} found. Review the flagged items before publishing.`;
+  const ready=failures===0;
+  const summary=ready?(warnings?`No blocking issues found. ${warnings} review note${warnings===1?'':'s'} remain; give the article a final human review before publishing.`:'All automated checks passed. Give the article a final human review before publishing.'):`${failures} blocking check${failures===1?'':'s'} found. Fix the flagged items before publishing.`;
   return NextResponse.json({ready,summary,checks});
 }
