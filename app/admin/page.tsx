@@ -132,7 +132,23 @@ function loadingPlaceholder(rows:React.ReactNode[]){return rows.length?rows:<div
 function SettingsPanel({tab,data,openForm,load}:{tab:'monetization'|'settings';data:Data;openForm:()=>void;load:()=>Promise<void>}){
   const isMoney=tab==='monetization';
   const items=isMoney?data.settings.filter(x=>['smartlink_url','banner_enabled','smartlink_enabled'].includes(x.key)):data.settings.filter(x=>!['smartlink_url','banner_enabled','smartlink_enabled'].includes(x.key));
-  return <section className="admin-panel"><div className="admin-panel-head"><div><span className="admin-eyebrow">{isMoney?'Revenue controls':'Site controls'}</span><h3>{isMoney?'Monetization':'Settings'}</h3></div><button className="admin-primary compact" onClick={openForm}><Plus size={16}/> Add setting</button></div><div className="admin-settings-list">{items.length?items.map(x=><div className="admin-setting-row" key={x.key}><div><b>{x.key}</b><small>{x.value||'Empty'}</small></div><button className="admin-setting-edit" onClick={()=>alert('Edit this setting by adding the same key again. The value will be updated.')}>Manage</button></div>):<div className="admin-empty"><Settings2 size={22}/><b>No settings yet</b><span>Add a setting to control this area.</span></div>}</div></section>;
+  const [currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[changingPassword,setChangingPassword]=useState(false);
+  async function changePassword(e:React.FormEvent){
+    e.preventDefault();
+    if(newPassword!==confirmPassword){alert('New passwords do not match.');return}
+    if(newPassword.length<12){alert('Use at least 12 characters for the new password.');return}
+    setChangingPassword(true);
+    const r=await fetch('/api/admin/password',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({currentPassword,newPassword})});
+    const b=await r.json().catch(()=>({}));
+    setChangingPassword(false);
+    if(!r.ok){alert(b.error||'Could not change password.');return}
+    setCurrentPassword('');setNewPassword('');setConfirmPassword('');
+    alert('Admin password changed successfully.');
+  }
+  return <div className="admin-settings-stack">
+    {!isMoney&&<section className="admin-panel"><div className="admin-panel-head"><div><span className="admin-eyebrow">Security</span><h3>Admin password</h3><p>Change the password used to sign in. Passwords are stored as a salted hash, not plain text.</p></div></div><form onSubmit={changePassword} className="admin-modal-form"><label>Current password<input type="password" required value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/></label><div className="admin-form-grid"><label>New password<input type="password" required minLength={12} value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="At least 12 characters"/></label><label>Confirm new password<input type="password" required minLength={12} value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/></label></div><button className="admin-primary" disabled={changingPassword}>{changingPassword?'Changing password…':'Change password'} <Settings2 size={16}/></button></form></section>}
+    <section className="admin-panel"><div className="admin-panel-head"><div><span className="admin-eyebrow">{isMoney?'Revenue controls':'Site controls'}</span><h3>{isMoney?'Monetization':'Settings'}</h3></div><button className="admin-primary compact" onClick={openForm}><Plus size={16}/> Add setting</button></div><div className="admin-settings-list">{items.length?items.map(x=><div className="admin-setting-row" key={x.key}><div><b>{x.key}</b><small>{x.value||'Empty'}</small></div><button className="admin-setting-edit" onClick={()=>alert('Edit this setting by adding the same key again. The value will be updated.')}>Manage</button></div>):<div className="admin-empty"><Settings2 size={22}/><b>No settings yet</b><span>Add a setting to control this area.</span></div>}</div></section>
+  </div>;
 }
 
 function ArticleStudio({data,load,del}:{data:Data;load:()=>Promise<void>;del:(type:string,id:number)=>Promise<void>}){
