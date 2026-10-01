@@ -12,7 +12,7 @@ export default async function SkillArchive({ params }: SkillPageProps) {
   await ensureDatabase();
 
   const skills = await sql`
-    SELECT id, name, slug
+    SELECT id, name, slug, search_keyword, device_needed, gig_title, earning_range
     FROM skills
     WHERE slug = ${slug}
     LIMIT 1
@@ -68,6 +68,11 @@ export default async function SkillArchive({ params }: SkillPageProps) {
         <span className="skill-kicker">Skill archive</span>
         <h1>Ways to earn with {skill.name}</h1>
         <p>Explore practical paths, useful resources, and ideas connected to what you know.</p>
+        <div className="skill-meta-grid">
+          {skill.earning_range && <div><span>Potential range</span><b>{skill.earning_range}</b></div>}
+          {skill.device_needed && <div><span>Setup</span><b>{skill.device_needed}</b></div>}
+        </div>
+        {skill.gig_title && <div className="skill-service"><span>Example service</span><b>{skill.gig_title}</b></div>}
       </section>
 
       <section className="skill-path-grid">
@@ -77,7 +82,7 @@ export default async function SkillArchive({ params }: SkillPageProps) {
             <p>{path.description}</p>
             <div className="skill-resource-list">
               {path.links.map((link: any) => (
-                <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
                   <div>
                     <b>{link.title}</b>
                     {link.description && <span>{link.description}</span>}
