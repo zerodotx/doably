@@ -71,55 +71,119 @@ function renderInline(text: string) {
 
 function renderArticle(markdown: string) {
   const headings = getHeadings(markdown);
+  const headingIds = new Map<string, string>();
+  headings.forEach((heading) => headingIds.set(heading.text, heading.id));
   let headingIndex = 0;
-  const blocks = String(markdown || '').trim().split(/\n\s*\n/);
 
-  return {
-    headings,
-    nodes: blocks.map((block, index) => {
-      const text = block.trim();
-      if (!text) return null;
+  const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+  const nodes: React.ReactNode[] = [];
+  let paragraph: string[] = [];
+  let list: { type: 'ul' | 'ol'; items: string[] } | null = null;
+  let quote: string[] = [];
 
-      const heading = text.match(/^#{1,3}\s+(.+)$/);
-      if (heading) {
-        const level = text.match(/^(#{1,3})/)?.[1].length || 2;
-        const item = headings[headingIndex++];
-        const id = item?.id || slugify(heading[1]);
-        const title = cleanInline(heading[1]);
-        if (level === 3) return <h3 id={id} key={index}>{renderInline(title)}</h3>;
-        return <h2 id={id} key={index}>{renderInline(title)}</h2>;
-      }
-
-      const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
-      const unordered = lines.length > 0 && lines.every((line) => /^[-*+]\s+/.test(line));
-      if (unordered) {
-        return (
-          <ul key={index}>
-            {lines.map((line, i) => <li key={i}>{renderInline(line.replace(/^[-*+]\s+/, ''))}</li>)}
-          </ul>
-        );
-      }
-
-      const ordered = lines.length > 0 && lines.every((line) => /^\d+[.)]\s+/.test(line));
-      if (ordered) {
-        return (
-          <ol key={index}>
-            {lines.map((line, i) => <li key={i}>{renderInline(line.replace(/^\d+[.)]\s+/, ''))}</li>)}
-          </ol>
-        );
-      }
-
-      if (lines.every((line) => /^>\s?/.test(line))) {
-        return <blockquote key={index}>{lines.map((line, i) => <span key={i}>{i > 0 && <br />}{renderInline(line.replace(/^>\s?/, ''))}</span>)}</blockquote>;
-      }
-
-      return (
-        <p key={index}>
-          {lines.map((line, i) => <span key={i}>{i > 0 && <br />}{renderInline(line)}</span>)}
-        </p>
-      );
-    })
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    nodes.push(
+      <p key={nodes.length}>
+        {paragraph.map((line, i) => <span key={i}>{i > 0 && <br />}{renderInline(line)}</span>)}
+      </p>
+    );
+    paragraph = [];
   };
+
+  const flushList = () => {
+    if (!list) return;
+    const Tag = list.type;
+    nodes.push(
+      <Tag key={nodes.length}>
+        {list.items.map((item, i) => <li key={i}>{renderInline(item)}</li>)}
+      </Tag>
+    );
+    list = null;
+  };
+
+  const flushQuote = () => {
+    if (!quote.length) return;
+    nodes.push(
+      <blockquote key={nodes.length}>
+        {quote.map((line, i) => <span key={i}>{i > 0 && <br />}{renderInline(line)}</span>)}
+      </blockquote>
+    );
+    quote = [];
+  };
+
+  const flushAll = () => {
+    flushParagraph();
+    flushList();
+    flushQuote();
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushAll();
+      continue;
+    }
+
+    // Handle Markdown headings even when the heading is directly followed
+    // by another line without a blank line.
+    const heading = line.match(/^(#{1,3})\s+(.+?)\s*$/);
+    if (heading) {
+      flushAll();
+      const level = heading[1].length === 3 ? 3 : 2;
+      const title = cleanInline(heading[2]);
+      if (/^table of contents$/i.test(title)) continue;
+
+      const item = headings[headingIndex++];
+      const id = item?.id || headingIds.get(title) || slugify(title);
+      nodes.push(level === 3
+        ? <h3 id={id} key={nodes.length}>{renderInline(title)}</h3>
+        : <h2 id={id} key={nodes.length}>{renderInline(title)}</h2>
+      );
+      continue;
+    }
+
+    const unordered = line.match(/^[-*+]\s+(.+)$/);
+    if (unordered) {
+      flushParagraph();
+      flushQuote();
+      if (!list || list.type !== 'ul') {
+        flushList();
+        list = { type: 'ul', items: [] };
+      }
+      list.items.push(unordered[1]);
+      continue;
+    }
+
+    const ordered = line.match(/^\d+[.)]\s+(.+)$/);
+    if (ordered) {
+      flushParagraph();
+      flushQuote();
+      if (!list || list.type !== 'ol') {
+        flushList();
+        list = { type: 'ol', items: [] };
+      }
+      list.items.push(ordered[1]);
+      continue;
+    }
+
+    const quoteLine = line.match(/^>\s?(.*)$/);
+    if (quoteLine) {
+      flushParagraph();
+      flushList();
+      quote.push(quoteLine[1]);
+      continue;
+    }
+
+    flushList();
+    flushQuote();
+    paragraph.push(line);
+  }
+
+  flushAll();
+
+  return { headings, nodes };
 }
 
 export default async function BlogArticle({ params }: Props) {
