@@ -11,6 +11,6 @@ export async function POST(r:NextRequest){
   if(!(await getStoredPasswordHash())) await setStoredPassword(String(password));
 
   const out=NextResponse.json({ok:true});
-  out.cookies.set(adminCookie.name,createAdminToken(),{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:adminCookie.maxAge});
+  out.cookies.set(adminCookie.name,await createAdminToken(),{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:adminCookie.maxAge});
   return out;
 }
