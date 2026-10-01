@@ -50,40 +50,41 @@ function levenshtein(a: string, b: string) {
   return previous[b.length];
 }
 
-function similarity(a: string, b: string) {
-  if (!a || !b) return 0;
-  const distance = levenshtein(a, b);
-  return 1 - distance / Math.max(a.length, b.length);
-}
+function fuzzyTokenScore(queryToken: string, field: string) {
+  const query = normalize(queryToken);
+  if (!query) return 0;
 
-function scoreField(queryToken: string, field: string) {
-  const fieldText = field.toLowerCase();
-  const fieldNormalized = normalize(field);
-  const queryNormalized = normalize(queryToken);
-
-  if (!queryNormalized || !fieldNormalized) return 0;
-  if (fieldNormalized === queryNormalized) return 120;
-  if (fieldNormalized.includes(queryNormalized)) return 90;
-
-  const fieldWords = words(field);
   let best = 0;
 
-  for (const fieldWord of fieldWords) {
-    const fieldWordNormalized = normalize(fieldWord);
-    if (fieldWordNormalized === queryNormalized) {
-      best = Math.max(best, 120);
-      continue;
-    }
-    if (fieldWordNormalized.includes(queryNormalized) || queryNormalized.includes(fieldWordNormalized)) {
-      best = Math.max(best, 75);
+  for (const fieldWord of words(field)) {
+    const candidate = normalize(fieldWord);
+    if (!candidate) continue;
+
+    if (candidate === query) {
+      best = Math.max(best, 100);
       continue;
     }
 
-    const sim = similarity(queryNormalized, fieldWordNormalized);
-    const maxDistance = queryNormalized.length <= 4 ? 1 : queryNormalized.length <= 7 ? 2 : 3;
+    // Handles things like "cap cut" -> "capcut" and "edit" -> "editing",
+    // but only when the query is long enough to avoid tiny-word noise.
+    if (query.length >= 4 && (candidate.includes(query) || query.includes(candidate))) {
+      const lengthGap = Math.abs(candidate.length - query.length);
+      if (lengthGap <= Math.max(2, Math.floor(query.length * 0.5))) {
+        best = Math.max(best, 78);
+        continue;
+      }
+    }
 
-    if (levenshtein(queryNormalized, fieldWordNormalized) <= maxDistance && sim >= 0.65) {
-      best = Math.max(best, Math.round(sim * 70));
+    // Small typo tolerance: cupcut -> capcut, managment -> management, etc.
+    const distance = levenshtein(query, candidate);
+    const maxDistance =
+      query.length <= 5 ? 1 :
+      query.length <= 8 ? 2 : 3;
+
+    const similarity = 1 - distance / Math.max(query.length, candidate.length);
+
+    if (distance <= maxDistance && similarity >= 0.75) {
+      best = Math.max(best, Math.round(similarity * 72));
     }
   }
 
@@ -92,43 +93,62 @@ function scoreField(queryToken: string, field: string) {
 
 function scoreSkill(query: string, row: any) {
   const queryTokens = words(query);
-  const combinedQuery = normalize(query);
-  const fields = [
-    { value: row.skill_name, weight: 1.3 },
+  if (!queryTokens.length) return 0;
+
+  // Search only fields that actually describe what the skill is.
+  // Descriptions and gig titles are deliberately excluded from matching;
+  // otherwise unrelated rows can win because of a single common word.
+  const primaryFields = [
+    { value: row.skill_name, weight: 1.45 },
     { value: row.skill_slug, weight: 1.25 },
     { value: row.search_keyword, weight: 1.2 },
     { value: row.category_name, weight: 1.15 },
-    { value: row.category_slug, weight: 1.1 },
-    { value: row.gig_title, weight: 0.9 },
-    { value: row.description, weight: 0.75 }
+    { value: row.category_slug, weight: 1.05 }
   ];
 
+  const normalizedQuery = normalize(query);
   let score = 0;
+  let matchedTokens = 0;
 
-  if (combinedQuery.length >= 3) {
-    for (const field of fields) {
+  // Strong phrase match: capcut, cap-cut, and cap cut can all resolve
+  // to the same normalized skill name.
+  if (normalizedQuery.length >= 3) {
+    for (const field of primaryFields) {
       const fieldNormalized = normalize(String(field.value || ''));
       if (!fieldNormalized) continue;
 
-      if (fieldNormalized === combinedQuery) {
-        score = Math.max(score, 150 * field.weight);
-      } else if (fieldNormalized.includes(combinedQuery)) {
-        score = Math.max(score, 105 * field.weight);
-      } else {
-        const sim = similarity(combinedQuery, fieldNormalized);
-        if (sim >= 0.72) {
-          score = Math.max(score, sim * 80 * field.weight);
-        }
+      if (fieldNormalized === normalizedQuery) {
+        score = Math.max(score, 180 * field.weight);
+      } else if (fieldNormalized.includes(normalizedQuery)) {
+        score = Math.max(score, 130 * field.weight);
       }
     }
   }
 
   for (const token of queryTokens) {
-    let bestTokenScore = 0;
-    for (const field of fields) {
-      bestTokenScore = Math.max(bestTokenScore, scoreField(token, String(field.value || '')) * field.weight);
+    let best = 0;
+
+    for (const field of primaryFields) {
+      best = Math.max(
+        best,
+        fuzzyTokenScore(token, String(field.value || '')) * field.weight
+      );
     }
-    score += bestTokenScore;
+
+    if (best > 0) {
+      matchedTokens += 1;
+      score += best;
+    }
+  }
+
+  // Every meaningful query must match at least one primary skill field.
+  // This prevents unrelated results such as "Virtual Assistant" appearing
+  // for a CapCut typo just because of weak fuzzy similarity elsewhere.
+  if (!matchedTokens) return 0;
+
+  // For multi-word searches, reward rows matching most of the user's terms.
+  if (queryTokens.length > 1 && matchedTokens < queryTokens.length) {
+    score *= matchedTokens / queryTokens.length;
   }
 
   return score;
@@ -140,9 +160,6 @@ export async function GET(r: NextRequest) {
     const raw = r.nextUrl.searchParams.get('q')?.trim() || '';
     if (!raw) return NextResponse.json({ results: [] });
 
-    // Fetch the skill index and rank it in the application layer. This lets us
-    // handle punctuation changes, joined words, small typos, and natural-language
-    // queries without requiring users to know the exact database wording.
     const rows = await sql`
       SELECT DISTINCT
         s.name AS skill_name,
@@ -162,8 +179,11 @@ export async function GET(r: NextRequest) {
 
     const ranked = rows
       .map((row: any) => ({ row, score: scoreSkill(raw, row) }))
-      .filter((item: any) => item.score >= 20)
-      .sort((a: any, b: any) => b.score - a.score || a.row.category_name.localeCompare(b.row.category_name))
+      .filter((item: any) => item.score >= 45)
+      .sort((a: any, b: any) =>
+        b.score - a.score ||
+        a.row.category_name.localeCompare(b.row.category_name)
+      )
       .slice(0, 12);
 
     const results = [];
@@ -201,6 +221,9 @@ export async function GET(r: NextRequest) {
     return NextResponse.json({ results });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: 'Search is temporarily unavailable.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Search is temporarily unavailable.' },
+      { status: 500 }
+    );
   }
 }
