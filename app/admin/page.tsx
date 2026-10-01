@@ -24,7 +24,7 @@ const empty:Data={skills:[],categories:[],links:[],subscribers:[],searchTerms:[]
 export default function Admin(){
   const [ok,setOk]=useState(false),[pw,setPw]=useState(''),[data,setData]=useState<Data>(empty);
   const [tab,setTab]=useState<Tab>('overview'),[query,setQuery]=useState(''),[formOpen,setFormOpen]=useState(false),[sidebarOpen,setSidebarOpen]=useState(false);
-  const [form,setForm]=useState<Record<string,string>>({}),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true);
+  const [form,setForm]=useState<Record<string,string>>({}),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true),[importing,setImporting]=useState(false);
 
   async function load(){setLoading(true);const r=await fetch('/api/admin/data');if(r.ok){setData(await r.json());setOk(true)}else setOk(false);setLoading(false)}
   useEffect(()=>{load()},[]);
@@ -32,6 +32,21 @@ export default function Admin(){
   async function save(e:React.FormEvent){e.preventDefault();setSaving(true);const type=tab==='skills'?'skill':tab==='paths'?'category':tab==='articles'?'link':tab==='search'?'searchTerm':'setting';const r=await fetch('/api/admin/data',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type,...form})});setSaving(false);if(!r.ok){const b=await r.json().catch(()=>({}));alert(b.error||'Could not save.');return}setForm({});setFormOpen(false);await load()}
   async function del(type:string,id:number){if(!confirm('Delete this item? This cannot be undone.'))return;const r=await fetch('/api/admin/data',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({type,id})});if(!r.ok)alert('Could not delete this item.');else load()}
   async function logout(){await fetch('/api/admin/logout',{method:'POST'});location.reload()}
+  async function importSpreadsheet(e:React.ChangeEvent<HTMLInputElement>){
+    const file=e.target.files?.[0];
+    e.target.value='';
+    if(!file)return;
+    if(!/\\.(xlsx|xls)$/i.test(file.name)){alert('Please choose an Excel .xlsx or .xls file.');return}
+    setImporting(true);
+    const body=new FormData();
+    body.append('file',file);
+    const r=await fetch('/api/admin/import',{method:'POST',body});
+    const b=await r.json().catch(()=>({}));
+    setImporting(false);
+    if(!r.ok){alert(b.error||'Import failed.');return}
+    await load();
+    alert(`Imported ${b.imported||0} rows from ${file.name}.`);
+  }
   function openForm(t:Tab){setTab(t);setForm({});setFormOpen(true)}
   const q=query.toLowerCase();
   const skills=useMemo(()=>data.skills.filter(x=>(x.name+' '+x.slug).toLowerCase().includes(q)),[data.skills,q]);
@@ -56,7 +71,7 @@ export default function Admin(){
     </aside>
 
     <section className="admin-main">
-      <header className="admin-topbar"><div className="admin-mobile-top"><button aria-label="Open menu" className="admin-menu-button" onClick={()=>setSidebarOpen(true)}><Menu size={21}/></button><a href="/" className="admin-mobile-logo">doably</a></div><div><div className="admin-breadcrumb">Doably / Admin</div><h1>{title}</h1></div><div className="admin-top-actions"><a href="/" target="_blank" className="admin-view-site">View site <ExternalLink size={14}/></a><button className="admin-avatar">A</button></div></header>
+      <header className="admin-topbar"><div className="admin-mobile-top"><button aria-label="Open menu" className="admin-menu-button" onClick={()=>setSidebarOpen(true)}><Menu size={21}/></button><a href="/" className="admin-mobile-logo">doably</a></div><div><div className="admin-breadcrumb">Doably / Admin</div><h1>{title}</h1></div><div className="admin-top-actions"><label className="admin-view-site admin-import-label">Import Excel <input type="file" accept=".xlsx,.xls" onChange={importSpreadsheet} disabled={importing} hidden/>{importing?'…':<Database size={14}/>}</label><a href="/" target="_blank" className="admin-view-site">View site <ExternalLink size={14}/></a><button className="admin-avatar">A</button></div></header>
 
       {tab==='overview'&&<div className="admin-content">
         <div className="admin-welcome"><div><span className="admin-eyebrow">Control center</span><h2>Everything in one place.</h2><p>Manage what users discover, what appears in search, and the content that powers Doably.</p></div><Sparkles size={54}/></div>
