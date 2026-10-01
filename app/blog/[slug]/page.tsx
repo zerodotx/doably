@@ -184,14 +184,6 @@ export default async function BlogArticle({ params }: Props) {
 
         <aside className="blog-sidebar">
           <div className="blog-widget blog-ad-widget">Advertisement</div>
-          {rendered.headings.length >= 2 && (
-            <div className="blog-widget blog-sidebar-toc">
-              <h3>In this article</h3>
-              {rendered.headings.slice(0, 8).map((heading) => (
-                <a className={heading.level === 3 ? 'sub' : ''} href={'#' + heading.id} key={heading.id}>{heading.text}</a>
-              ))}
-            </div>
-          )}
           <div className="blog-widget">
             <h3>Popular on Doably</h3>
             {related.map((item: any) => (
