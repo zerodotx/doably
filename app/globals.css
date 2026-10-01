@@ -112,3 +112,23 @@
 
 /* Public article pages */
 .blog-site{min-height:100vh;background:#fbfaf7;color:#18201d}.blog-header{height:72px;max-width:1180px;margin:auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e8e4}.blog-header nav{display:flex;gap:20px}.blog-header nav a{font-size:12px;font-weight:700;color:#607068}.blog-header nav a:hover{color:#315c4b}.blog-ad-slot{width:min(1180px,calc(100% - 40px));margin:18px auto;text-align:center;color:#a0a8a3;font-size:10px;letter-spacing:.08em;text-transform:uppercase;min-height:20px}.blog-layout{width:min(1180px,calc(100% - 40px));margin:22px auto 55px;display:grid;grid-template-columns:minmax(0,780px) 300px;gap:30px;align-items:start}.blog-article{background:#fff;border:1px solid #e0e5df;border-radius:18px;padding:42px 48px}.blog-category{display:inline-block;background:#e8f0e8;color:#315d4b;border-radius:100px;padding:7px 12px;font-size:11px;font-weight:800;margin-bottom:16px}.blog-article h1{font:800 42px/1.12 Manrope,sans-serif;letter-spacing:-.045em;margin:0 0 15px}.blog-excerpt{font-size:16px;line-height:1.65;color:#68736d;margin:0 0 14px}.blog-meta{font-size:11px;color:#9aa39e;padding-bottom:24px;border-bottom:1px solid #edf0ed}.blog-content{padding-top:26px;font-size:16px;line-height:1.85;color:#34413a}.blog-content h2{font:800 27px/1.3 Manrope,sans-serif;letter-spacing:-.025em;color:#18201d;margin:34px 0 12px}.blog-content h3{font:800 21px/1.35 Manrope,sans-serif;color:#26352e;margin:28px 0 10px}.blog-content p{margin:0 0 20px}.blog-content ul{margin:0 0 22px;padding-left:24px}.blog-content li{margin:7px 0}.blog-sidebar{position:sticky;top:20px;display:grid;gap:16px}.blog-widget{background:#fff;border:1px solid #e0e5df;border-radius:16px;padding:18px}.blog-widget h3{font:800 15px Manrope,sans-serif;margin:0 0 12px}.blog-widget>a{display:block;padding:11px 0;border-bottom:1px solid #edf0ed;color:#26352e}.blog-widget>a:last-child{border-bottom:0}.blog-widget b{display:block;font-size:12px;line-height:1.45}.blog-widget small{display:block;color:#7d8983;font-size:10px;line-height:1.4;margin-top:4px}.blog-ad-widget{min-height:250px;display:grid;place-items:center;color:#a0a8a3;font-size:10px;text-transform:uppercase;letter-spacing:.08em}.blog-ad-bottom{min-height:90px;display:grid;place-items:center;border:1px dashed #dfe4df;border-radius:12px}.blog-footer{width:min(1180px,calc(100% - 40px));margin:auto}.blog-site a{text-decoration:none}@media(max-width:850px){.blog-layout{grid-template-columns:1fr}.blog-sidebar{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}.blog-ad-widget{min-height:180px}}@media(max-width:600px){.blog-header{padding:0 18px}.blog-header nav{gap:12px}.blog-layout{width:calc(100% - 24px);margin-top:12px}.blog-article{padding:27px 20px;border-radius:15px}.blog-article h1{font-size:32px}.blog-content{font-size:15px}.blog-sidebar{grid-template-columns:1fr}.blog-ad-slot{width:calc(100% - 24px)}}
+
+/* Structured editorial article improvements */
+.blog-toc{margin:28px 0 30px;padding:20px 22px;background:#f5f8f4;border:1px solid #dfe8df;border-radius:14px}
+.blog-toc-title{font:800 14px Manrope,sans-serif;color:#20332b;margin-bottom:10px}
+.blog-toc ol{margin:0;padding-left:22px;color:#50635a}
+.blog-toc li{margin:6px 0;padding-left:2px}
+.blog-toc li.blog-toc-sub{margin-left:18px;font-size:13px}
+.blog-toc a{font-size:13px;color:#315d4b;text-decoration:none}
+.blog-toc a:hover{text-decoration:underline;text-underline-offset:3px}
+.blog-content h2,.blog-content h3{scroll-margin-top:90px}
+.blog-content h2:first-child{margin-top:0}
+.blog-content ol{margin:0 0 22px;padding-left:24px}
+.blog-content ol li{margin:7px 0}
+.blog-content blockquote{margin:24px 0;padding:15px 18px;border-left:4px solid #9db39f;background:#f6f8f5;color:#52635b;border-radius:0 10px 10px 0}
+.blog-content strong{font-weight:800;color:#26352e}
+.blog-content code{background:#f0f3ef;border:1px solid #e1e6e1;border-radius:5px;padding:2px 5px;font-size:.9em}
+.blog-content a{color:#315d4b;text-decoration:underline;text-underline-offset:3px}
+.blog-sidebar-toc a{font-size:11px!important;color:#50635a!important}
+.blog-sidebar-toc a.sub{padding-left:12px;color:#7a8982!important}
+@media(max-width:600px){.blog-toc{padding:17px 16px}.blog-toc a{font-size:12px}.blog-content h2{font-size:24px}.blog-content h3{font-size:19px}}
