@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const length = String(body.length || '1200 words').trim();
   if (!topic) return NextResponse.json({ error: 'Enter an article topic.' }, { status: 400 });
 
-  const prompt = `Create a useful, original blog article for Doably.
+  const prompt = `Create a useful, original, editorial-style blog article for Doably.
 Topic: ${topic}
 Audience: ${audience}
 Tone: ${tone}
@@ -21,12 +21,30 @@ Target length: ${length}
 Return ONLY valid JSON with these exact keys:
 title, slug, excerpt, seoTitle, metaDescription, content
 
-Rules:
-- content must be clean Markdown suitable for a blog CMS.
-- Use helpful H2/H3 headings, short paragraphs and bullet lists where useful.
-- Do not invent statistics, earnings guarantees, testimonials, or fake sources.
+The content field MUST be Markdown and MUST follow this structure:
+## Introduction
+Write 2-4 short paragraphs introducing the topic and setting realistic expectations.
+
+## [Main section]
+Use 3-6 useful H2 sections that answer the reader's questions or explain practical options.
+Under relevant H2 sections, use H3 subheadings for specific methods, examples, tools, or steps.
+
+## Frequently Asked Questions
+Include 3-5 useful FAQ questions as H3 headings, with concise answers under each.
+
+## Final Thoughts
+End with a practical summary and sensible next step. Do not promise income.
+
+Formatting rules:
+- Use H2 headings (##) for major sections and H3 headings (###) for subtopics.
+- Keep paragraphs short: usually 2-4 sentences.
+- Use bullet or numbered lists when they improve readability.
+- Do not manually add a Table of Contents; Doably creates it automatically.
+- Do not put the article title as an H1 inside content because the site displays the title separately.
+- Do not return one giant paragraph.
+- Do not invent statistics, earnings guarantees, testimonials, fake sources, or unsupported claims.
 - Avoid promising income.
-- Make the article genuinely useful and actionable.
+- Make the article genuinely useful, specific and actionable.
 - Do not include a JSON code fence.`;
 
   const model = process.env.GEMINI_ARTICLE_MODEL || 'gemini-3.1-flash-lite';
