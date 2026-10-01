@@ -20,6 +20,7 @@ export async function ensureDatabase(){
   await sql`INSERT INTO skill_aliases(skill_id,alias,kind)
     SELECT id, lower(replace(slug,'-',' ')), 'generated' FROM skills
     ON CONFLICT(skill_id,alias) DO NOTHING`;
+  await sql`CREATE TABLE IF NOT EXISTS admin_credentials(id INTEGER PRIMARY KEY DEFAULT 1,password_hash TEXT NOT NULL,updated_at TIMESTAMP NOT NULL DEFAULT NOW())`;
   await sql`CREATE TABLE IF NOT EXISTS site_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL DEFAULT '')`;
   await sql`CREATE TABLE IF NOT EXISTS blog_articles(id SERIAL PRIMARY KEY,title TEXT NOT NULL,slug TEXT NOT NULL UNIQUE,excerpt TEXT NOT NULL DEFAULT '',content TEXT NOT NULL DEFAULT '',seo_title TEXT NOT NULL DEFAULT '',meta_description TEXT NOT NULL DEFAULT '',category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,status TEXT NOT NULL DEFAULT 'draft',views INTEGER NOT NULL DEFAULT 0,created_at TIMESTAMP NOT NULL DEFAULT NOW(),updated_at TIMESTAMP NOT NULL DEFAULT NOW())`;
   await sql`ALTER TABLE blog_articles ADD COLUMN IF NOT EXISTS views INTEGER NOT NULL DEFAULT 0`;
