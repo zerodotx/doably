@@ -5,7 +5,7 @@ import { ensureDatabase } from '@/db/setup';
 const stopWords = new Set([
   'i', 'can', 'do', 'know', 'want', 'like', 'to', 'my', 'what', 'with',
   'and', 'the', 'a', 'an', 'for', 'of', 'in', 'on', 'how', 'is', 'am',
-  'me', 'you', 'make', 'making', 'have', 'has', 'get', 'give'
+  'me', 'you', 'make', 'making', 'have', 'has', 'get', 'give', 'please'
 ]);
 
 function normalize(value: string) {
@@ -35,7 +35,6 @@ function levenshtein(a: string, b: string) {
 
   for (let i = 1; i <= a.length; i++) {
     const current = [i];
-
     for (let j = 1; j <= b.length; j++) {
       current[j] = Math.min(
         current[j - 1] + 1,
@@ -43,7 +42,6 @@ function levenshtein(a: string, b: string) {
         previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
       );
     }
-
     previous = current;
   }
 
@@ -55,7 +53,6 @@ function fuzzyTokenScore(queryToken: string, field: string) {
   if (!query) return 0;
 
   let best = 0;
-
   for (const fieldWord of words(field)) {
     const candidate = normalize(fieldWord);
     if (!candidate) continue;
@@ -65,8 +62,6 @@ function fuzzyTokenScore(queryToken: string, field: string) {
       continue;
     }
 
-    // Handles things like "cap cut" -> "capcut" and "edit" -> "editing",
-    // but only when the query is long enough to avoid tiny-word noise.
     if (query.length >= 4 && (candidate.includes(query) || query.includes(candidate))) {
       const lengthGap = Math.abs(candidate.length - query.length);
       if (lengthGap <= Math.max(2, Math.floor(query.length * 0.5))) {
@@ -75,12 +70,8 @@ function fuzzyTokenScore(queryToken: string, field: string) {
       }
     }
 
-    // Small typo tolerance: cupcut -> capcut, managment -> management, etc.
     const distance = levenshtein(query, candidate);
-    const maxDistance =
-      query.length <= 5 ? 1 :
-      query.length <= 8 ? 2 : 3;
-
+    const maxDistance = query.length <= 5 ? 1 : query.length <= 8 ? 2 : 3;
     const similarity = 1 - distance / Math.max(query.length, candidate.length);
 
     if (distance <= maxDistance && similarity >= 0.75) {
@@ -95,63 +86,61 @@ function scoreSkill(query: string, row: any) {
   const queryTokens = words(query);
   if (!queryTokens.length) return 0;
 
-  // Search only fields that actually describe what the skill is.
-  // Descriptions and gig titles are deliberately excluded from matching;
-  // otherwise unrelated rows can win because of a single common word.
   const primaryFields = [
-    { value: row.skill_name, weight: 1.45 },
-    { value: row.skill_slug, weight: 1.25 },
+    { value: row.skill_name, weight: 1.55 },
+    { value: row.skill_slug, weight: 1.35 },
     { value: row.search_keyword, weight: 1.2 },
     { value: row.category_name, weight: 1.15 },
-    { value: row.category_slug, weight: 1.05 }
+    { value: row.category_slug, weight: 1.05 },
+    { value: (row.aliases || []).join(' | '), weight: 1.65 }
   ];
 
   const normalizedQuery = normalize(query);
   let score = 0;
   let matchedTokens = 0;
 
-  // Strong phrase match: capcut, cap-cut, and cap cut can all resolve
-  // to the same normalized skill name.
-  if (normalizedQuery.length >= 3) {
+  if (normalizedQuery.length >= 2) {
     for (const field of primaryFields) {
       const fieldNormalized = normalize(String(field.value || ''));
       if (!fieldNormalized) continue;
 
       if (fieldNormalized === normalizedQuery) {
-        score = Math.max(score, 180 * field.weight);
+        score = Math.max(score, 220 * field.weight);
       } else if (fieldNormalized.includes(normalizedQuery)) {
-        score = Math.max(score, 130 * field.weight);
+        score = Math.max(score, 155 * field.weight);
       }
     }
   }
 
   for (const token of queryTokens) {
     let best = 0;
-
     for (const field of primaryFields) {
-      best = Math.max(
-        best,
-        fuzzyTokenScore(token, String(field.value || '')) * field.weight
-      );
+      best = Math.max(best, fuzzyTokenScore(token, String(field.value || '')) * field.weight);
     }
 
     if (best > 0) {
-      matchedTokens += 1;
+      matchedTokens++;
       score += best;
     }
   }
 
-  // Every meaningful query must match at least one primary skill field.
-  // This prevents unrelated results such as "Virtual Assistant" appearing
-  // for a CapCut typo just because of weak fuzzy similarity elsewhere.
   if (!matchedTokens) return 0;
 
-  // For multi-word searches, reward rows matching most of the user's terms.
   if (queryTokens.length > 1 && matchedTokens < queryTokens.length) {
     score *= matchedTokens / queryTokens.length;
   }
 
   return score;
+}
+
+function prefixMatch(query: string, row: any) {
+  const q = normalize(query);
+  if (!q) return false;
+  const fields = [row.skill_name, row.skill_slug, row.search_keyword, row.category_name, ...(row.aliases || [])];
+  return fields.some((field: string) => {
+    const text = normalize(String(field || ''));
+    return text.startsWith(q) || text.split(/[^a-z0-9]+/).some((part) => part.startsWith(q));
+  });
 }
 
 export async function GET(r: NextRequest) {
@@ -171,20 +160,41 @@ export async function GET(r: NextRequest) {
         c.id AS category_id,
         c.name AS category_name,
         c.slug AS category_slug,
-        c.description
+        c.description,
+        COALESCE(
+          ARRAY(
+            SELECT sa.alias
+            FROM skill_aliases sa
+            WHERE sa.skill_id = s.id
+            ORDER BY sa.id
+          ),
+          ARRAY[]::text[]
+        ) AS aliases
       FROM skills s
       JOIN skill_categories sc ON sc.skill_id = s.id
       JOIN categories c ON c.id = sc.category_id
     `;
 
-    const ranked = rows
-      .map((row: any) => ({ row, score: scoreSkill(raw, row) }))
-      .filter((item: any) => item.score >= 45)
-      .sort((a: any, b: any) =>
-        b.score - a.score ||
-        a.row.category_name.localeCompare(b.row.category_name)
-      )
-      .slice(0, 12);
+    const normalizedRaw = normalize(raw);
+
+    // Very short queries are ambiguous. Use deterministic prefix matching
+    // instead of pretending a one-letter query has a precise intent.
+    const ranked = normalizedRaw.length <= 2
+      ? rows
+          .filter((row: any) => prefixMatch(raw, row))
+          .sort((a: any, b: any) =>
+            normalize(a.skill_name).localeCompare(normalize(b.skill_name))
+          )
+          .slice(0, 8)
+          .map((row: any) => ({ row, score: 100 }))
+      : rows
+          .map((row: any) => ({ row, score: scoreSkill(raw, row) }))
+          .filter((item: any) => item.score >= 55)
+          .sort((a: any, b: any) =>
+            b.score - a.score ||
+            a.row.category_name.localeCompare(b.row.category_name)
+          )
+          .slice(0, 12);
 
     const results = [];
 
