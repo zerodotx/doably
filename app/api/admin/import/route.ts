@@ -104,6 +104,22 @@ export async function POST(request: NextRequest) {
         ON CONFLICT DO NOTHING
       `;
 
+      const aliasCandidates = [
+        [name, 'primary'],
+        [slug.replace(/-/g, ' '), 'generated'],
+        [searchKeyword.replace(/^i can do\\s+/i, '').trim(), 'generated']
+      ];
+      for (const [alias, kind] of aliasCandidates) {
+        const cleanAlias = String(alias || '').trim().toLowerCase();
+        if (cleanAlias.length >= 2) {
+          await sql`
+            INSERT INTO skill_aliases(skill_id, alias, kind)
+            VALUES(${skillId}, ${cleanAlias}, ${kind})
+            ON CONFLICT(skill_id, alias) DO UPDATE SET kind = EXCLUDED.kind
+          `;
+        }
+      }
+
       if (searchKeyword) {
         await sql`
           INSERT INTO search_terms(term, skill_id)
