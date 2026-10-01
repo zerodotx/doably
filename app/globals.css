@@ -144,3 +144,8 @@
 .skill-service b{display:block;margin-top:5px;font-size:13px;color:#26352e;line-height:1.5}
 .admin-import-label{cursor:pointer}
 .admin-import-label:hover{border-color:#c6d0c9;background:#f8faf7}
+
+.result-meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 auto 18px}
+.result-meta>span{display:flex;flex-direction:column;gap:3px;background:#f5f8f4;border:1px solid #e1e8e0;border-radius:10px;padding:9px 12px;max-width:100%}
+.result-meta b{font-size:11px;color:#315d4b;text-align:center}
+.result-meta small{font-size:9px;color:#8b9690;text-align:center;text-transform:uppercase;letter-spacing:.07em}
