@@ -14,9 +14,14 @@ type LinkResult = {
 
 type SearchResult = {
   skill_name: string;
+  skill_slug?: string;
   category_id: number;
   category_name: string;
   description: string;
+  search_keyword?: string | null;
+  device_needed?: string | null;
+  gig_title?: string | null;
+  earning_range?: string | null;
   links: LinkResult[];
 };
 
@@ -135,6 +140,10 @@ export default function Home() {
                 <article className="result-card" key={result.category_id}>
                   <a className="result-pill result-skill-link" href={`/skills/${result.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}>{result.category_name}</a>
                   <p className="result-description">{result.description}</p>
+                  {(result.earning_range || result.gig_title) && <div className="result-meta">
+                    {result.earning_range && <span><b>{result.earning_range}</b><small>earning range</small></span>}
+                    {result.gig_title && <span><b>{result.gig_title}</b><small>example service</small></span>}
+                  </div>}
                   <div className="article-list">
                     {result.links.slice(0, 3).map((link) => (
                       <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
