@@ -43,7 +43,7 @@ export async function GET(r: NextRequest) {
     );
 
     const rows = await sql`
-      SELECT DISTINCT s.name AS skill_name, c.id AS category_id, c.name AS category_name, c.description
+      SELECT DISTINCT s.name AS skill_name, s.slug AS skill_slug, s.search_keyword, s.device_needed, s.gig_title, s.earning_range, c.id AS category_id, c.name AS category_name, c.description
       FROM skills s
       JOIN skill_categories sc ON sc.skill_id = s.id
       JOIN categories c ON c.id = sc.category_id
