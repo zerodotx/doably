@@ -149,3 +149,17 @@
 .result-meta>span{display:flex;flex-direction:column;gap:3px;background:#f5f8f4;border:1px solid #e1e8e0;border-radius:10px;padding:9px 12px;max-width:100%}
 .result-meta b{font-size:11px;color:#315d4b;text-align:center}
 .result-meta small{font-size:9px;color:#8b9690;text-align:center;text-transform:uppercase;letter-spacing:.07em}
+
+
+/* Prominent spreadsheet import on the admin dashboard */
+.admin-import-feature{margin-bottom:22px;border:1px solid #b7dfc7;background:linear-gradient(135deg,rgba(22,163,74,.06),transparent 65%)}
+.admin-import-feature .admin-panel-head{align-items:flex-start}
+.admin-import-feature .admin-panel-head p{margin:7px 0 0;color:var(--muted,#667085);font-size:14px;line-height:1.5;max-width:620px}
+.admin-import-drop{display:flex;align-items:center;gap:14px;padding:16px;border:1px dashed #7bbf94;border-radius:12px;background:rgba(22,163,74,.035);cursor:pointer;transition:background .15s,border-color .15s}
+.admin-import-drop:hover{background:rgba(22,163,74,.08);border-color:#16a34a}
+.admin-import-symbol{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:rgba(22,163,74,.12);color:#15803d;flex:none}
+.admin-import-drop>span:nth-of-type(2){display:grid;gap:4px;min-width:0}
+.admin-import-drop b{font-size:14px;color:var(--foreground,#17202a)}
+.admin-import-drop small{font-size:12px;color:var(--muted,#667085)}
+.admin-import-action{margin-left:auto;padding:9px 13px;border-radius:8px;background:#15803d;color:#fff;font-size:13px;font-weight:600;white-space:nowrap}
+@media(max-width:520px){.admin-import-drop{gap:10px;padding:12px}.admin-import-action{padding:8px 9px;font-size:12px}}
