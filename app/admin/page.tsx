@@ -19,7 +19,7 @@ type BlogArticle={id:number;title:string;slug:string;excerpt:string;content:stri
 type QCCheck={key:string;label:string;status:'pass'|'warn'|'fail';detail:string};
 type QCResult={ready:boolean;summary:string;checks:QCCheck[]};
 type Data={skills:Skill[];categories:Category[];links:LinkItem[];tools:Tool[];earningPlatforms:EarningPlatform[];subscribers:Subscriber[];searchTerms:SearchTerm[];settings:Setting[];blogArticles:BlogArticle[]};
-type Tab='overview'|'skills'|'paths'|'articles'|'links'|'article-studio'|'subscribers'|'search'|'monetization'|'settings';
+type Tab='overview'|'skills'|'paths'|'tools'|'platforms'|'articles'|'links'|'article-studio'|'subscribers'|'search'|'monetization'|'settings';
 
 const empty:Data={skills:[],categories:[],links:[],tools:[],earningPlatforms:[],subscribers:[],searchTerms:[],settings:[],blogArticles:[]};
 
