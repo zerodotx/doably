@@ -10,6 +10,7 @@ type LinkResult = {
   source?: string | null;
   description?: string | null;
   internal?: boolean;
+  link_type?: string;
 };
 
 type SearchResult = {
@@ -23,6 +24,8 @@ type SearchResult = {
   gig_title?: string | null;
   earning_range?: string | null;
   links: LinkResult[];
+  tools: LinkResult[];
+  earningPlatforms: LinkResult[];
 };
 
 const suggestions = ['I can draw', 'I can cook', 'I can write', 'I can teach', 'I can edit videos'];
@@ -144,10 +147,32 @@ export default function Home() {
                     {result.earning_range && <span><b>{result.earning_range}</b><small>earning range</small></span>}
                     {result.gig_title && <span><b>{result.gig_title}</b><small>example service</small></span>}
                   </div>}
+                  {result.tools?.length > 0 && <div className="result-resource-group">
+                    <h3>🛠 Tools you can use</h3>
+                    <div className="article-list">
+                      {result.tools.slice(0, 6).map((link) => (
+                        <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                          <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Tool'}</small></div>
+                          <ArrowRight size={16} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>}
+                  {result.earningPlatforms?.length > 0 && <div className="result-resource-group">
+                    <h3>💰 Places to earn</h3>
+                    <div className="article-list">
+                      {result.earningPlatforms.slice(0, 6).map((link) => (
+                        <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                          <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Earning platform'}</small></div>
+                          <ArrowRight size={16} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>}
                   <div className="article-list">
-                    {result.links.slice(0, 3).map((link) => (
+                    {result.links.filter((link) => !link.link_type || link.link_type === 'resource').slice(0, 3).map((link) => (
                       <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
-                        <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'External resource'}</small></div>
+                        <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Resource'}</small></div>
                         <ArrowRight size={16} />
                       </a>
                     ))}
