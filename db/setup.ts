@@ -49,8 +49,6 @@ async function ensureSearchResourcesV2(){
     }
   }
   await sql`INSERT INTO site_settings(key,value) VALUES('search_resources_v2_seed','done') ON CONFLICT(key) DO NOTHING`;
-  await ensureSearchResourcesV2();
-
 }
 
 import { sql } from './index';
@@ -160,5 +158,4 @@ export async function ensureDatabase(){
     'mockup-freelancing':[['3D design freelance jobs','https://www.upwork.com/freelance-jobs/3d-design/','Upwork']]
   };
   for(const c of cats) for(const [title,url,source] of(resources[c.slug]||[])) await sql`INSERT INTO links(category_id,title,url,source) VALUES(${c.id},${title},${url},${source})`;
-
-}
+\n  await ensureSearchResourcesV2();\n\n}\n
