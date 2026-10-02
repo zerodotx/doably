@@ -110,6 +110,23 @@ async function ensureNormalizedResourcesV2(){
   await sql`INSERT INTO site_settings(key,value) VALUES('normalized_resources_v2_backfill','done') ON CONFLICT(key) DO NOTHING`;
 }
 
+async function ensureSkillKeywordsV1(){
+  const marker=await sql`SELECT value FROM site_settings WHERE key='skill_keywords_v1'`;
+  if(marker.length) return;
+
+  const keywordSeeds:any={
+    '3d-mockup':'3d mockup,3d mockups,mockup,mockups,product mockup,product mockups,3d product,product visualization',
+    'drawing':'draw,drawing,sketch,sketching,illustration,illustrations',
+    '3d-design':'3d,3d design,3d modeling,3d modelling,modeling,modelling,3d models,3d rendering,rendering'
+  };
+
+  for(const [slug,keywords] of Object.entries(keywordSeeds)){
+    await sql`UPDATE skills SET search_keyword=${keywords} WHERE slug=${slug}`;
+  }
+
+  await sql`INSERT INTO site_settings(key,value) VALUES('skill_keywords_v1','done') ON CONFLICT(key) DO NOTHING`;
+}
+
 import { sql } from './index';
 
 export async function ensureDatabase(){
@@ -139,6 +156,7 @@ export async function ensureDatabase(){
 
   const existing=await sql`SELECT id FROM skills LIMIT 1`;
   if(existing.length){
+    await ensureSkillKeywordsV1();
     await ensureNormalizedResourcesV2();
     await ensureSearchResourcesV2();
     return;
@@ -219,6 +237,7 @@ export async function ensureDatabase(){
   };
   for(const c of cats) for(const [title,url,source] of(resources[c.slug]||[])) await sql`INSERT INTO links(category_id,title,url,source) VALUES(${c.id},${title},${url},${source})`;
 
+  await ensureSkillKeywordsV1();
   await ensureNormalizedResourcesV2();
   await ensureSearchResourcesV2();
 
