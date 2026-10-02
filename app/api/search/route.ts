@@ -92,7 +92,8 @@ function scoreSkill(query: string, row: any) {
     { value: row.search_keyword, weight: 1.2 },
     { value: row.category_name, weight: 1.15 },
     { value: row.category_slug, weight: 1.05 },
-    { value: (row.aliases || []).join(' | '), weight: 1.65 }
+    { value: (row.aliases || []).join(' | '), weight: 1.65 },
+    { value: (row.search_terms || []).join(' | '), weight: 1.9 }
   ];
 
   const normalizedQuery = normalize(query);
@@ -142,7 +143,8 @@ function prefixMatch(query: string, row: any) {
     row.skill_slug,
     row.search_keyword,
     row.category_name,
-    ...(row.aliases || [])
+    ...(row.aliases || []),
+    ...(row.search_terms || [])
   ];
 
   // Tokenize before normalization so separators such as commas, slashes,
@@ -180,7 +182,16 @@ export async function GET(r: NextRequest) {
             ORDER BY sa.id
           ),
           ARRAY[]::text[]
-        ) AS aliases
+        ) AS aliases,
+        COALESCE(
+          ARRAY(
+            SELECT st.term
+            FROM search_terms st
+            WHERE st.skill_id = s.id
+            ORDER BY st.id
+          ),
+          ARRAY[]::text[]
+        ) AS search_terms
       FROM skills s
       JOIN skill_categories sc ON sc.skill_id = s.id
       JOIN categories c ON c.id = sc.category_id
