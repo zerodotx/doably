@@ -209,7 +209,7 @@ export async function GET(r: NextRequest) {
 
       const externalLimit = articles.length >= 2 ? 1 : 3 - articles.length;
       const external = await sql`
-        SELECT id, title, url, source, description
+        SELECT id, title, url, source, description, link_type
         FROM links
         WHERE category_id = ${row.category_id} AND is_active = TRUE
         ORDER BY priority DESC, id ASC
@@ -225,7 +225,13 @@ export async function GET(r: NextRequest) {
         internal: true
       }));
 
-      results.push({ ...row, links: [...articleLinks, ...external] });
+      const allLinks = [...articleLinks, ...external];
+      results.push({
+        ...row,
+        links: allLinks,
+        tools: allLinks.filter((link: any) => link.link_type === 'tool'),
+        earningPlatforms: allLinks.filter((link: any) => link.link_type === 'earning_platform')
+      });
     }
 
     return NextResponse.json({ results });
