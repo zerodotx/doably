@@ -151,7 +151,7 @@ export default function Home() {
                     <div className="article-list">
                       {result.tools.slice(0, 6).map((link) => (
                         <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
-                          <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Tool'}</small></div>
+                          <div><b>{link.title}</b><small>{link.source || 'Tool'}</small></div>
                           <ArrowRight size={16} />
                         </a>
                       ))}
@@ -162,7 +162,7 @@ export default function Home() {
                     <div className="article-list">
                       {result.earningPlatforms.slice(0, 6).map((link) => (
                         <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
-                          <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Earning platform'}</small></div>
+                          <div><b>{link.title}</b><small>{link.source || 'Earning platform'}</small></div>
                           <ArrowRight size={16} />
                         </a>
                       ))}
