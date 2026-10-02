@@ -103,5 +103,4 @@ export async function ensureDatabase(){
   };
   for(const c of cats) for(const [title,url,source] of(resources[c.slug]||[])) await sql`INSERT INTO links(category_id,title,url,source) VALUES(${c.id},${title},${url},${source})`;
 
-  await sql`INSERT INTO search_terms(term,skill_id) VALUES('cupcut',${drawing[0].id}) ON CONFLICT DO NOTHING`;
 }
