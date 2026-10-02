@@ -207,7 +207,7 @@ export async function GET(r: NextRequest) {
         LIMIT 2
       `;
 
-      const externalLimit = articles.length >= 2 ? 1 : 3 - articles.length;
+      const externalLimit = 20;
       const external = await sql`
         SELECT id, title, url, source, description, link_type
         FROM links
