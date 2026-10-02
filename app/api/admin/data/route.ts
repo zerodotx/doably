@@ -25,6 +25,16 @@ export async function POST(r:NextRequest){
   await ensureDatabase();
   const b=await r.json();
   try{
+    if(b.type==='update'){
+      const id=Number(b.id);
+      if(b.targetType==='skill'){const x=await sql`UPDATE skills SET name=${b.name},slug=${b.slug} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
+      if(b.targetType==='category'){const x=await sql`UPDATE categories SET name=${b.name},slug=${b.slug},description=${b.description} WHERE id=${id} RETURNING *`;if(b.skillId)await sql`INSERT INTO skill_categories(skill_id,category_id) VALUES(${Number(b.skillId)},${id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
+      if(b.targetType==='tool'){const x=await sql`UPDATE tools SET name=${b.name},slug=${b.slug},url=${b.url},source=${b.source||null},description=${b.description||null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
+      if(b.targetType==='earningPlatform'){const x=await sql`UPDATE earning_platforms SET name=${b.name},slug=${b.slug},url=${b.url},source=${b.source||null},description=${b.description||null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
+      if(b.targetType==='link'){const x=await sql`UPDATE links SET category_id=${Number(b.categoryId)},title=${b.title},url=${b.url},source=${b.source||null},description=${b.description||null},priority=${Number(b.priority||0)},link_type=${b.linkType||'resource'} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
+      if(b.targetType==='searchTerm'){const x=await sql`UPDATE search_terms SET term=${b.term.toLowerCase().trim()},skill_id=${b.skillId?Number(b.skillId):null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
+      return NextResponse.json({error:'Unsupported edit type'},{status:400});
+    }
     if(b.type==='skill'){const x=await sql`INSERT INTO skills(name,slug) VALUES(${b.name},${b.slug}) RETURNING *`;return NextResponse.json(x[0]);}
     if(b.type==='category'){const x=await sql`INSERT INTO categories(name,slug,description) VALUES(${b.name},${b.slug},${b.description}) RETURNING *`;if(b.skillId)await sql`INSERT INTO skill_categories(skill_id,category_id) VALUES(${Number(b.skillId)},${x[0].id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
     if(b.type==='tool'){const x=await sql`INSERT INTO tools(name,slug,url,source,description,is_active) VALUES(${b.name},${b.slug},${b.url},${b.source||null},${b.description||null},TRUE) RETURNING *`; if(b.skillId)await sql`INSERT INTO skill_tools(skill_id,tool_id) VALUES(${Number(b.skillId)},${x[0].id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
