@@ -37,13 +37,26 @@ export default async function SkillArchive({ params }: SkillPageProps) {
       ORDER BY views DESC, updated_at DESC, id DESC
       LIMIT 2
     `;
-    const externalLimit = articles.length >= 2 ? 1 : 3 - articles.length;
     const external = await sql`
       SELECT id, title, url, source, description, link_type
       FROM links
       WHERE category_id = ${path.id} AND is_active = TRUE
       ORDER BY priority DESC, id ASC
-      LIMIT ${externalLimit}
+      LIMIT 10
+    `;
+    const tools = await sql`
+      SELECT t.id, t.name AS title, t.url, t.source, t.description
+      FROM tools t
+      JOIN skill_tools st ON st.tool_id = t.id
+      WHERE st.skill_id = ${skill.id} AND t.is_active = TRUE
+      ORDER BY t.name
+    `;
+    const earningPlatforms = await sql`
+      SELECT ep.id, ep.name AS title, ep.url, ep.source, ep.description
+      FROM earning_platforms ep
+      JOIN skill_earning_platforms sep ON sep.platform_id = ep.id
+      WHERE sep.skill_id = ${skill.id} AND ep.is_active = TRUE
+      ORDER BY ep.name
     `;
     const articleLinks = articles.map((article: any) => ({
       id: `article-${article.id}`,
@@ -54,7 +67,7 @@ export default async function SkillArchive({ params }: SkillPageProps) {
       internal: true
     }));
     const allLinks = [...articleLinks, ...external];
-    pathData.push({ ...path, links: allLinks, tools: allLinks.filter((x: any) => x.link_type === 'tool'), earningPlatforms: allLinks.filter((x: any) => x.link_type === 'earning_platform') });
+    pathData.push({ ...path, links: allLinks, tools, earningPlatforms });
   }
 
   return (
