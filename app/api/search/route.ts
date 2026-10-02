@@ -151,6 +151,7 @@ export async function GET(r: NextRequest) {
 
     const rows = await sql`
       SELECT DISTINCT
+        s.id AS skill_id,
         s.name AS skill_name,
         s.slug AS skill_slug,
         s.search_keyword,
@@ -207,13 +208,26 @@ export async function GET(r: NextRequest) {
         LIMIT 2
       `;
 
-      const externalLimit = 20;
       const external = await sql`
         SELECT id, title, url, source, description, link_type
         FROM links
         WHERE category_id = ${row.category_id} AND is_active = TRUE
         ORDER BY priority DESC, id ASC
-        LIMIT ${externalLimit}
+        LIMIT 20
+      `;
+      const tools = await sql`
+        SELECT t.id, t.name AS title, t.url, t.source, t.description
+        FROM tools t
+        JOIN skill_tools st ON st.tool_id = t.id
+        WHERE st.skill_id = ${row.skill_id} AND t.is_active = TRUE
+        ORDER BY t.name
+      `;
+      const earningPlatforms = await sql`
+        SELECT ep.id, ep.name AS title, ep.url, ep.source, ep.description
+        FROM earning_platforms ep
+        JOIN skill_earning_platforms sep ON sep.platform_id = ep.id
+        WHERE sep.skill_id = ${row.skill_id} AND ep.is_active = TRUE
+        ORDER BY ep.name
       `;
 
       const articleLinks = articles.map((article: any) => ({
@@ -229,8 +243,8 @@ export async function GET(r: NextRequest) {
       results.push({
         ...row,
         links: allLinks,
-        tools: allLinks.filter((link: any) => link.link_type === 'tool'),
-        earningPlatforms: allLinks.filter((link: any) => link.link_type === 'earning_platform')
+        tools,
+        earningPlatforms
       });
     }
 
