@@ -51,6 +51,65 @@ async function ensureSearchResourcesV2(){
   await sql`INSERT INTO site_settings(key,value) VALUES('search_resources_v2_seed','done') ON CONFLICT(key) DO NOTHING`;
 }
 
+async function ensureNormalizedResourcesV2(){
+  const marker=await sql`SELECT value FROM site_settings WHERE key='normalized_resources_v2_backfill'`;
+  if(marker.length) return;
+
+  const toolSeeds:any=[
+    ['Canva','canva','https://www.canva.com/','Canva','Create graphics, presentations, and simple product mockups.'],
+    ['Placeit','placeit','https://placeit.net/','Placeit','Create product, apparel, device, and branding mockups.'],
+    ['Mockey','mockey','https://mockey.ai/','Mockey','Create product and apparel mockups.'],
+    ['Blender','blender','https://www.blender.org/','Blender','Create advanced 3D models, scenes, and renders.'],
+    ['Figma','figma','https://www.figma.com/','Figma','Design interfaces, graphics, and visual presentations.'],
+    ['Adobe Illustrator','adobe-illustrator','https://www.adobe.com/products/illustrator.html','Adobe','Create vector illustrations and graphics.'],
+    ['CapCut','capcut','https://www.capcut.com/','CapCut','Edit short-form video and social content.'],
+    ['Photopea','photopea','https://www.photopea.com/','Photopea','Edit images and layered design files in the browser.']
+  ];
+  for(const [name,slug,url,source,description] of toolSeeds){
+    await sql`INSERT INTO tools(name,slug,url,source,description)
+      VALUES(${name},${slug},${url},${source},${description})
+      ON CONFLICT(slug) DO NOTHING`;
+  }
+
+  const platformSeeds:any=[
+    ['Fiverr','fiverr','https://www.fiverr.com/','Fiverr','Offer freelance services to clients.'],
+    ['Upwork','upwork','https://www.upwork.com/','Upwork','Find freelance projects and clients.'],
+    ['Etsy','etsy','https://www.etsy.com/','Etsy','Sell digital products and templates.'],
+    ['Gumroad','gumroad','https://gumroad.com/','Gumroad','Sell digital products directly to customers.'],
+    ['Creative Market','creative-market','https://creativemarket.com/','Creative Market','Sell design assets and templates.'],
+    ['Freelancer','freelancer','https://www.freelancer.com/','Freelancer','Browse freelance projects and services.']
+  ];
+  for(const [name,slug,url,source,description] of platformSeeds){
+    await sql`INSERT INTO earning_platforms(name,slug,url,source,description)
+      VALUES(${name},${slug},${url},${source},${description})
+      ON CONFLICT(slug) DO NOTHING`;
+  }
+
+  const skillRows=await sql`SELECT id,slug FROM skills WHERE slug IN ('drawing','3d-mockup')`;
+  const toolMap:any={};
+  const platformMap:any={};
+  for(const x of await sql`SELECT id,slug FROM tools`) toolMap[x.slug]=x.id;
+  for(const x of await sql`SELECT id,slug FROM earning_platforms`) platformMap[x.slug]=x.id;
+
+  for(const skill of skillRows){
+    const toolSlugs=skill.slug==='3d-mockup'
+      ? ['canva','placeit','mockey','blender','figma','photopea']
+      : ['canva','figma','adobe-illustrator','photopea'];
+    const platformSlugs=skill.slug==='3d-mockup'
+      ? ['fiverr','upwork','etsy','gumroad','creative-market','freelancer']
+      : ['fiverr','upwork','etsy','creative-market'];
+
+    for(const slug of toolSlugs){
+      if(toolMap[slug]) await sql`INSERT INTO skill_tools(skill_id,tool_id) VALUES(${skill.id},${toolMap[slug]}) ON CONFLICT DO NOTHING`;
+    }
+    for(const slug of platformSlugs){
+      if(platformMap[slug]) await sql`INSERT INTO skill_earning_platforms(skill_id,platform_id) VALUES(${skill.id},${platformMap[slug]}) ON CONFLICT DO NOTHING`;
+    }
+  }
+
+  await sql`INSERT INTO site_settings(key,value) VALUES('normalized_resources_v2_backfill','done') ON CONFLICT(key) DO NOTHING`;
+}
+
 import { sql } from './index';
 
 export async function ensureDatabase(){
@@ -80,6 +139,7 @@ export async function ensureDatabase(){
 
   const existing=await sql`SELECT id FROM skills LIMIT 1`;
   if(existing.length){
+    await ensureNormalizedResourcesV2();
     await ensureSearchResourcesV2();
     return;
   }
@@ -159,6 +219,7 @@ export async function ensureDatabase(){
   };
   for(const c of cats) for(const [title,url,source] of(resources[c.slug]||[])) await sql`INSERT INTO links(category_id,title,url,source) VALUES(${c.id},${title},${url},${source})`;
 
+  await ensureNormalizedResourcesV2();
   await ensureSearchResourcesV2();
 
 }
