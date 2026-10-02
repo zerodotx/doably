@@ -39,7 +39,7 @@ export default async function SkillArchive({ params }: SkillPageProps) {
     `;
     const externalLimit = articles.length >= 2 ? 1 : 3 - articles.length;
     const external = await sql`
-      SELECT id, title, url, source, description
+      SELECT id, title, url, source, description, link_type
       FROM links
       WHERE category_id = ${path.id} AND is_active = TRUE
       ORDER BY priority DESC, id ASC
@@ -53,7 +53,8 @@ export default async function SkillArchive({ params }: SkillPageProps) {
       description: article.description || null,
       internal: true
     }));
-    pathData.push({ ...path, links: [...articleLinks, ...external] });
+    const allLinks = [...articleLinks, ...external];
+    pathData.push({ ...path, links: allLinks, tools: allLinks.filter((x: any) => x.link_type === 'tool'), earningPlatforms: allLinks.filter((x: any) => x.link_type === 'earning_platform') });
   }
 
   return (
@@ -80,8 +81,26 @@ export default async function SkillArchive({ params }: SkillPageProps) {
           <article className="skill-path-card" key={path.id}>
             <div className="result-pill">{path.name}</div>
             <p>{path.description}</p>
+            {path.tools?.length > 0 && <>
+              <h3 className="resource-heading">🛠 Tools you can use</h3>
+              <div className="skill-resource-list">{path.tools.map((link: any) => (
+                <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                  <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Tool'}</small></div>
+                  <ArrowRight size={16} />
+                </a>
+              ))}</div>
+            </>}
+            {path.earningPlatforms?.length > 0 && <>
+              <h3 className="resource-heading">💰 Places to earn</h3>
+              <div className="skill-resource-list">{path.earningPlatforms.map((link: any) => (
+                <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
+                  <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Earning platform'}</small></div>
+                  <ArrowRight size={16} />
+                </a>
+              ))}</div>
+            </>}
             <div className="skill-resource-list">
-              {path.links.map((link: any) => (
+              {path.links.filter((link: any) => !link.link_type || link.link_type === 'resource').map((link: any) => (
                 <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
                   <div>
                     <b>{link.title}</b>
