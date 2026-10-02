@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { ArrowRight, CheckCircle2, Search, Sparkles, X } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ExternalLink, Search, Sparkles, X } from 'lucide-react';
 
 type LinkResult = {
   id: number;
