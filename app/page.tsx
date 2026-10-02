@@ -143,9 +143,8 @@ export default function Home() {
                 <article className="result-card" key={`${result.skill_slug || result.skill_name}-${result.category_id}`}>
                   <a className="result-pill result-skill-link" href={`/skills/${result.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}>{result.category_name}</a>
                   <p className="result-description">{result.description}</p>
-                  {(result.earning_range || result.gig_title) && <div className="result-meta">
-                    {result.earning_range && <span><b>{result.earning_range}</b><small>earning range</small></span>}
-                    {result.gig_title && <span><b>{result.gig_title}</b><small>example service</small></span>}
+                  {result.earning_range && <div className="result-meta">
+                    <span><b>{result.earning_range}</b><small>earning possibilities</small></span>
                   </div>}
                   {result.tools?.length > 0 && <div className="result-resource-group">
                     <h3>🛠 Tools you can use</h3>
