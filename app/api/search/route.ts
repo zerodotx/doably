@@ -93,7 +93,11 @@ function scoreSkill(query: string, row: any) {
     { value: (row.category_names || []).join(' | '), weight: 1.15 },
     { value: (row.category_slugs || []).join(' | '), weight: 1.05 },
     { value: (row.aliases || []).join(' | '), weight: 1.65 },
-    { value: (row.search_terms || []).join(' | '), weight: 1.9 }
+    { value: (row.search_terms || []).join(' | '), weight: 1.9 },
+    // Tool names are first-class search signals. This lets searches such as
+    // "capcut", "I use capcut", and small typos like "cupcut" resolve to
+    // the skill(s) connected to that tool.
+    { value: (row.tool_names || []).join(' | '), weight: 2.05 }
   ];
 
   const normalizedQuery = normalize(query);
@@ -145,7 +149,8 @@ function prefixMatch(query: string, row: any) {
     ...(row.category_names || []),
     ...(row.category_slugs || []),
     ...(row.aliases || []),
-    ...(row.search_terms || [])
+    ...(row.search_terms || []),
+    ...(row.tool_names || [])
   ];
 
   // Tokenize before normalization so separators such as commas, slashes,
@@ -169,7 +174,8 @@ export async function GET(r: NextRequest) {
         COALESCE(ARRAY(SELECT c.name FROM skill_categories sc JOIN categories c ON c.id = sc.category_id WHERE sc.skill_id = s.id ORDER BY c.name), ARRAY[]::text[]) AS category_names,
         COALESCE(ARRAY(SELECT c.slug FROM skill_categories sc JOIN categories c ON c.id = sc.category_id WHERE sc.skill_id = s.id ORDER BY c.slug), ARRAY[]::text[]) AS category_slugs,
         COALESCE(ARRAY(SELECT sa.alias FROM skill_aliases sa WHERE sa.skill_id = s.id ORDER BY sa.id), ARRAY[]::text[]) AS aliases,
-        COALESCE(ARRAY(SELECT st.term FROM search_terms st WHERE st.skill_id = s.id ORDER BY st.id), ARRAY[]::text[]) AS search_terms
+        COALESCE(ARRAY(SELECT st.term FROM search_terms st WHERE st.skill_id = s.id ORDER BY st.id), ARRAY[]::text[]) AS search_terms,
+        COALESCE(ARRAY(SELECT t.name FROM skill_tools st JOIN tools t ON t.id = st.tool_id WHERE st.skill_id = s.id AND t.is_active = TRUE ORDER BY t.name), ARRAY[]::text[]) AS tool_names
       FROM skills s
     `;
     const normalizedRaw = normalize(raw);
