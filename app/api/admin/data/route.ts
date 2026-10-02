@@ -27,7 +27,7 @@ export async function POST(r:NextRequest){
   try{
     if(b.type==='update'){
       const id=Number(b.id);
-      if(b.targetType==='skill'){const x=await sql`UPDATE skills SET name=${b.name},slug=${b.slug},search_keyword=${b.searchKeyword||null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
+      if(b.targetType==='skill'){const x=await sql`UPDATE skills SET name=${b.name},slug=${b.slug},search_keyword=${b.searchKeyword||null},device_needed=${b.deviceNeeded||null},gig_title=${b.gigTitle||null},earning_range=${b.earningRange||null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
       if(b.targetType==='category'){const x=await sql`UPDATE categories SET name=${b.name},slug=${b.slug},description=${b.description} WHERE id=${id} RETURNING *`;if(b.skillId)await sql`INSERT INTO skill_categories(skill_id,category_id) VALUES(${Number(b.skillId)},${id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
       if(b.targetType==='tool'){const x=await sql`UPDATE tools SET name=${b.name},slug=${b.slug},url=${b.url},source=${b.source||null},description=${b.description||null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
       if(b.targetType==='earningPlatform'){const x=await sql`UPDATE earning_platforms SET name=${b.name},slug=${b.slug},url=${b.url},source=${b.source||null},description=${b.description||null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
@@ -35,7 +35,7 @@ export async function POST(r:NextRequest){
       if(b.targetType==='searchTerm'){const x=await sql`UPDATE search_terms SET term=${b.term.toLowerCase().trim()},skill_id=${b.skillId?Number(b.skillId):null} WHERE id=${id} RETURNING *`;return NextResponse.json(x[0]);}
       return NextResponse.json({error:'Unsupported edit type'},{status:400});
     }
-    if(b.type==='skill'){const x=await sql`INSERT INTO skills(name,slug,search_keyword) VALUES(${b.name},${b.slug},${b.searchKeyword||null}) RETURNING *`;return NextResponse.json(x[0]);}
+    if(b.type==='skill'){const x=await sql`INSERT INTO skills(name,slug,search_keyword,device_needed,gig_title,earning_range) VALUES(${b.name},${b.slug},${b.searchKeyword||null},${b.deviceNeeded||null},${b.gigTitle||null},${b.earningRange||null}) RETURNING *`;return NextResponse.json(x[0]);}
     if(b.type==='category'){const x=await sql`INSERT INTO categories(name,slug,description) VALUES(${b.name},${b.slug},${b.description}) RETURNING *`;if(b.skillId)await sql`INSERT INTO skill_categories(skill_id,category_id) VALUES(${Number(b.skillId)},${x[0].id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
     if(b.type==='tool'){const x=await sql`INSERT INTO tools(name,slug,url,source,description,is_active) VALUES(${b.name},${b.slug},${b.url},${b.source||null},${b.description||null},TRUE) RETURNING *`; if(b.skillId)await sql`INSERT INTO skill_tools(skill_id,tool_id) VALUES(${Number(b.skillId)},${x[0].id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
     if(b.type==='earningPlatform'){const x=await sql`INSERT INTO earning_platforms(name,slug,url,source,description,is_active) VALUES(${b.name},${b.slug},${b.url},${b.source||null},${b.description||null},TRUE) RETURNING *`; if(b.skillId)await sql`INSERT INTO skill_earning_platforms(skill_id,platform_id) VALUES(${Number(b.skillId)},${x[0].id}) ON CONFLICT DO NOTHING`;return NextResponse.json(x[0]);}
