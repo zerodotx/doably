@@ -148,25 +148,23 @@ export default function Home() {
                   </div>}
                   {result.tools?.length > 0 && <div className="result-resource-group">
                     <h3>🛠 Tools you can use</h3>
-                    <div className="article-list">
+                    <ul className="compact-resource-list">
                       {result.tools.slice(0, 6).map((link) => (
-                        <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
-                          <div><b>{link.title}</b><small>{link.source || 'Tool'}</small></div>
-                          <ArrowRight size={16} />
-                        </a>
+                        <li key={link.id}>
+                          <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>}
                   {result.earningPlatforms?.length > 0 && <div className="result-resource-group">
                     <h3>💰 Places to earn</h3>
-                    <div className="article-list">
+                    <ul className="compact-resource-list">
                       {result.earningPlatforms.slice(0, 6).map((link) => (
-                        <a className="article-link" href={link.url} target="_blank" rel="noreferrer" key={link.id}>
-                          <div><b>{link.title}</b><small>{link.source || 'Earning platform'}</small></div>
-                          <ArrowRight size={16} />
-                        </a>
+                        <li key={link.id}>
+                          <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>}
                   <div className="result-resource-group">
                     <h3>📚 Learn from real articles</h3>
