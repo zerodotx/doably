@@ -1,3 +1,58 @@
+async function ensureSearchResourcesV2(){
+  const marker=await sql`SELECT value FROM site_settings WHERE key='search_resources_v2_seed'`;
+  if(marker.length) return;
+
+  const resources:any={
+    illustration:[
+      ['How to find inspiration for your graphics','https://www.canva.com/learn/feeding-creativity-find-inspiration-graphics/','Canva'],
+      ['Design elements and principles','https://www.canva.com/learn/design-elements-and-principles/','Canva'],
+      ['Graphic design tips for beginners','https://www.canva.com/learn/graphic-design-tips-non-designers/','Canva']
+    ],
+    'graphic-design':[
+      ['Graphic design tips for beginners','https://www.canva.com/learn/graphic-design-tips-non-designers/','Canva'],
+      ['Design elements and principles','https://www.canva.com/learn/design-elements-and-principles/','Canva'],
+      ['A comprehensive guide to design principles','https://www.canva.com/learn/guide-to-understanding-design-principles/','Canva']
+    ],
+    freelancing:[
+      ['How to get clients as a freelancer','https://www.upwork.com/resources/how-to-get-clients-as-a-freelancer','Upwork'],
+      ['How to get graphic design clients','https://www.upwork.com/resources/get-graphic-design-clients','Upwork'],
+      ['How to build a freelance portfolio','https://www.upwork.com/resources/how-to-create-portfolio','Upwork']
+    ],
+    'content-creation':[
+      ['What is a content creator and how to become one','https://www.adobe.com/express/learn/blog/content-creator','Adobe Express'],
+      ['How to speed up content creation','https://www.adobe.com/express/learn/blog/content-creation','Adobe Express'],
+      ['How to speed up your team’s content creation process','https://www.canva.com/learn/content-creation/','Canva']
+    ],
+    '3d-mockups':[
+      ['3D Ecommerce: What It Is and How to Use It','https://www.shopify.com/blog/3d-ecommerce','Shopify'],
+      ['How to generate professional mockups with Adobe Express','https://www.adobe.com/uk/express/learn/blog/generate-professional-mockups','Adobe Express'],
+      ['Create Realistic 3D Mock-ups with Adobe Stock and Dimension','https://blog.adobe.com/en/publish/2020/02/05/create-realistic-3d-mock-ups-with-adobe-stock-and-dimension','Adobe']
+    ],
+    '3d-design':[
+      ['Start 3D: An introduction to key 3D concepts','https://blog.adobe.com/en/publish/2020/11/09/start-3d-an-introduction-to-key-3d-concepts','Adobe'],
+      ['3D Design Tutorial: Rich Package Designs and Product Mock-Ups','https://blog.adobe.com/en/publish/2019/10/24/3d-design-tutorial-package-design-product-mockups','Adobe'],
+      ['Visualize your Product in a Realistic Environment','https://blog.adobe.com/en/publish/2019/10/31/visualize-your-product-in-a-realistic-environment','Adobe']
+    ],
+    'mockup-freelancing':[
+      ['How to get clients as a freelancer','https://www.upwork.com/resources/how-to-get-clients-as-a-freelancer','Upwork'],
+      ['Designer Profile Tips and Examples','https://www.upwork.com/resources/designer-profile-tips','Upwork'],
+      ['Upwork Portfolio Guide','https://www.upwork.com/resources/portfolio-guide','Upwork']
+    ]
+  };
+
+  const cats=await sql`SELECT id,slug FROM categories`;
+  for(const c of cats){
+    for(const [title,url,source] of(resources[c.slug]||[])){
+      await sql`INSERT INTO links(category_id,title,url,source,description,priority,link_type)
+        SELECT ${c.id},${title},${url},${source},'Helpful reading related to this earning path.',${100},'resource'
+        WHERE NOT EXISTS (SELECT 1 FROM links WHERE category_id=${c.id} AND url=${url})`;
+    }
+  }
+  await sql`INSERT INTO site_settings(key,value) VALUES('search_resources_v2_seed','done') ON CONFLICT(key) DO NOTHING`;
+  await ensureSearchResourcesV2();
+
+}
+
 import { sql } from './index';
 
 export async function ensureDatabase(){
@@ -26,7 +81,10 @@ export async function ensureDatabase(){
   }
 
   const existing=await sql`SELECT id FROM skills LIMIT 1`;
-  if(existing.length) return;
+  if(existing.length){
+    await ensureSearchResourcesV2();
+    return;
+  }
 
   const drawing=await sql`INSERT INTO skills(name,slug,search_keyword,gig_title,earning_range) VALUES('Drawing','drawing','draw,sketch,illustration,art','I will create custom drawings and illustrations','Depends on service and client') RETURNING id`;
   const mockup=await sql`INSERT INTO skills(name,slug,search_keyword,gig_title,earning_range) VALUES('3D Mockup','3d-mockup','3d mockup,product mockup,3d design,mockup','I will create a realistic 3D mockup for your product','Depends on service and client') RETURNING id`;
