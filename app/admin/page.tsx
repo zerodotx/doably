@@ -25,7 +25,7 @@ const empty:Data={skills:[],categories:[],links:[],tools:[],earningPlatforms:[],
 
 export default function Admin(){
   const [ok,setOk]=useState(false),[pw,setPw]=useState(''),[data,setData]=useState<Data>(empty),[recoveryMode,setRecoveryMode]=useState(false),[recoveryPw,setRecoveryPw]=useState(''),[recoveryNew,setRecoveryNew]=useState(''),[recoveryConfirm,setRecoveryConfirm]=useState(''),[recovering,setRecovering]=useState(false);
-  const [tab,setTab]=useState<Tab>('overview'),[query,setQuery]=useState(''),[formOpen,setFormOpen]=useState(false),[sidebarOpen,setSidebarOpen]=useState(false);
+  const [tab,setTab]=useState<Tab>('overview'),[query,setQuery]=useState(''),[formOpen,setFormOpen]=useState(false),[sidebarOpen,setSidebarOpen]=useState(false),[profileOpen,setProfileOpen]=useState(false);
   const [form,setForm]=useState<Record<string,string>>({}),[saving,setSaving]=useState(false),[loading,setLoading]=useState(true),[importing,setImporting]=useState(false);
 
   async function load(){setLoading(true);const r=await fetch('/api/admin/data');if(r.ok){setData(await r.json());setOk(true)}else setOk(false);setLoading(false)}
