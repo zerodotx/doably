@@ -90,8 +90,8 @@ function scoreSkill(query: string, row: any) {
     { value: row.skill_name, weight: 1.55 },
     { value: row.skill_slug, weight: 1.35 },
     { value: row.search_keyword, weight: 1.2 },
-    { value: row.category_name, weight: 1.15 },
-    { value: row.category_slug, weight: 1.05 },
+    { value: (row.category_names || []).join(' | '), weight: 1.15 },
+    { value: (row.category_slugs || []).join(' | '), weight: 1.05 },
     { value: (row.aliases || []).join(' | '), weight: 1.65 },
     { value: (row.search_terms || []).join(' | '), weight: 1.9 }
   ];
@@ -142,7 +142,8 @@ function prefixMatch(query: string, row: any) {
     row.skill_name,
     row.skill_slug,
     row.search_keyword,
-    row.category_name,
+    ...(row.category_names || []),
+    ...(row.category_slugs || []),
     ...(row.aliases || []),
     ...(row.search_terms || [])
   ];
@@ -162,41 +163,15 @@ export async function GET(r: NextRequest) {
     if (!raw) return NextResponse.json({ results: [] });
 
     const rows = await sql`
-      SELECT DISTINCT
-        s.id AS skill_id,
-        s.name AS skill_name,
-        s.slug AS skill_slug,
-        s.search_keyword,
-        s.device_needed,
-        s.gig_title,
-        s.earning_range,
-        c.id AS category_id,
-        c.name AS category_name,
-        c.slug AS category_slug,
-        c.description,
-        COALESCE(
-          ARRAY(
-            SELECT sa.alias
-            FROM skill_aliases sa
-            WHERE sa.skill_id = s.id
-            ORDER BY sa.id
-          ),
-          ARRAY[]::text[]
-        ) AS aliases,
-        COALESCE(
-          ARRAY(
-            SELECT st.term
-            FROM search_terms st
-            WHERE st.skill_id = s.id
-            ORDER BY st.id
-          ),
-          ARRAY[]::text[]
-        ) AS search_terms
+      SELECT
+        s.id AS skill_id, s.name AS skill_name, s.slug AS skill_slug,
+        s.search_keyword, s.device_needed, s.gig_title, s.earning_range,
+        COALESCE(ARRAY(SELECT c.name FROM skill_categories sc JOIN categories c ON c.id = sc.category_id WHERE sc.skill_id = s.id ORDER BY c.name), ARRAY[]::text[]) AS category_names,
+        COALESCE(ARRAY(SELECT c.slug FROM skill_categories sc JOIN categories c ON c.id = sc.category_id WHERE sc.skill_id = s.id ORDER BY c.slug), ARRAY[]::text[]) AS category_slugs,
+        COALESCE(ARRAY(SELECT sa.alias FROM skill_aliases sa WHERE sa.skill_id = s.id ORDER BY sa.id), ARRAY[]::text[]) AS aliases,
+        COALESCE(ARRAY(SELECT st.term FROM search_terms st WHERE st.skill_id = s.id ORDER BY st.id), ARRAY[]::text[]) AS search_terms
       FROM skills s
-      JOIN skill_categories sc ON sc.skill_id = s.id
-      JOIN categories c ON c.id = sc.category_id
     `;
-
     const normalizedRaw = normalize(raw);
 
     // Very short queries are ambiguous. Use deterministic prefix matching
@@ -214,7 +189,7 @@ export async function GET(r: NextRequest) {
           .filter((item: any) => item.score >= 55)
           .sort((a: any, b: any) =>
             b.score - a.score ||
-            a.row.category_name.localeCompare(b.row.category_name)
+            normalize(a.row.skill_name).localeCompare(normalize(b.row.skill_name))
           )
           .slice(0, 12);
 
@@ -222,17 +197,19 @@ export async function GET(r: NextRequest) {
 
     for (const { row } of ranked) {
       const articles = await sql`
-        SELECT id, title, slug, excerpt AS description, views
-        FROM blog_articles
-        WHERE category_id = ${row.category_id} AND status = 'published'
+        SELECT DISTINCT b.id, b.title, b.slug, b.excerpt AS description, b.views
+        FROM blog_articles b
+        JOIN skill_categories sc ON sc.category_id = b.category_id
+        WHERE sc.skill_id = ${row.skill_id} AND b.status = 'published'
         ORDER BY views DESC, updated_at DESC, id DESC
         LIMIT 2
       `;
 
       const external = await sql`
-        SELECT id, title, url, source, description, link_type
-        FROM links
-        WHERE category_id = ${row.category_id} AND is_active = TRUE
+        SELECT DISTINCT l.id, l.title, l.url, l.source, l.description, l.link_type
+        FROM links l
+        JOIN skill_categories sc ON sc.category_id = l.category_id
+        WHERE sc.skill_id = ${row.skill_id} AND l.is_active = TRUE
         ORDER BY priority DESC, id ASC
         LIMIT 20
       `;
@@ -263,6 +240,8 @@ export async function GET(r: NextRequest) {
       const allLinks = [...articleLinks, ...external];
       results.push({
         ...row,
+        category_name: (row.category_names || [])[0] || '',
+        category_slug: (row.category_slugs || [])[0] || '',
         links: allLinks,
         tools,
         earningPlatforms
