@@ -151,8 +151,7 @@ export default function Home() {
                     <ul className="compact-resource-list">
                       {result.tools.slice(0, 6).map((link) => (
                         <li key={link.id}>
-                          <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
-                          <ExternalLink size={13} strokeWidth={2} aria-hidden="true" className="external-icon" />
+                          <a href={link.url} target="_blank" rel="noreferrer">{link.title} <ExternalLink size={13} strokeWidth={2} aria-hidden="true" className="external-icon" /></a>
                         </li>
                       ))}
                     </ul>
@@ -173,7 +172,7 @@ export default function Home() {
                     {result.links.filter((link) => !link.link_type || link.link_type === 'resource').slice(0, 3).map((link) => (
                       <li key={link.id}>
                         <a href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"}>
-                          {link.title} <span className="external-arrow" aria-hidden="true">↗</span>
+                          {link.title} <ExternalLink size={13} strokeWidth={2} aria-hidden="true" className="external-icon" />
                         </a>
                       </li>
                     ))}
