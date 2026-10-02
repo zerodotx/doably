@@ -163,3 +163,6 @@
 .admin-import-drop small{font-size:12px;color:var(--muted,#667085)}
 .admin-import-action{margin-left:auto;padding:9px 13px;border-radius:8px;background:#15803d;color:#fff;font-size:13px;font-weight:600;white-space:nowrap}
 @media(max-width:520px){.admin-import-drop{gap:10px;padding:12px}.admin-import-action{padding:8px 9px;font-size:12px}}
+
+
+.result-resource-group{margin-top:18px}.result-resource-group h3,.resource-heading{font-size:13px;font-weight:700;margin:0 0 9px;color:#333}.resource-heading{margin-top:20px}.result-resource-group+.result-resource-group{margin-top:20px}
