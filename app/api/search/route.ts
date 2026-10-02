@@ -136,11 +136,21 @@ function scoreSkill(query: string, row: any) {
 function prefixMatch(query: string, row: any) {
   const q = normalize(query);
   if (!q) return false;
-  const fields = [row.skill_name, row.skill_slug, row.search_keyword, row.category_name, ...(row.aliases || [])];
-  return fields.some((field: string) => {
-    const text = normalize(String(field || ''));
-    return text.startsWith(q) || text.split(/[^a-z0-9]+/).some((part) => part.startsWith(q));
-  });
+
+  const fields = [
+    row.skill_name,
+    row.skill_slug,
+    row.search_keyword,
+    row.category_name,
+    ...(row.aliases || [])
+  ];
+
+  // Tokenize before normalization so separators such as commas, slashes,
+  // and spaces remain meaningful. This prevents a keyword list like
+  // "draw, drawing, sketch, illustration" from becoming one long token.
+  return fields.some((field: string) =>
+    words(String(field || '')).some((part) => normalize(part).startsWith(q))
+  );
 }
 
 export async function GET(r: NextRequest) {
