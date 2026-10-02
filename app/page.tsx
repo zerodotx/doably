@@ -152,6 +152,7 @@ export default function Home() {
                       {result.tools.slice(0, 6).map((link) => (
                         <li key={link.id}>
                           <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
+                          <ArrowRight size={15} aria-hidden="true" />
                         </li>
                       ))}
                     </ul>
