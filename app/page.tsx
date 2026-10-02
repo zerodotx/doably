@@ -140,7 +140,7 @@ export default function Home() {
                 <div className="search-state"><b>No matches yet.</b><span>Try describing what you can do in a few words, like “I can draw” or “I know Excel”.</span></div>
               )}
               {!loading && !error && results.map((result) => (
-                <article className="result-card" key={result.category_id}>
+                <article className="result-card" key={`${result.skill_slug || result.skill_name}-${result.category_id}`}>
                   <a className="result-pill result-skill-link" href={`/skills/${result.skill_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`}>{result.category_name}</a>
                   <p className="result-description">{result.description}</p>
                   {(result.earning_range || result.gig_title) && <div className="result-meta">
@@ -169,13 +169,16 @@ export default function Home() {
                       ))}
                     </div>
                   </div>}
-                  <div className="article-list">
+                  <div className="result-resource-group">
+                    <h3>📚 Learn from real articles</h3>
+                    <div className="article-list">
                     {result.links.filter((link) => !link.link_type || link.link_type === 'resource').slice(0, 3).map((link) => (
                       <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
                         <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Resource'}</small></div>
                         <ArrowRight size={16} />
                       </a>
                     ))}
+                    </div>
                   </div>
                 </article>
               ))}
