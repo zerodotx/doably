@@ -26,6 +26,31 @@ function words(value: string) {
     .filter((word) => word.length >= 2 && !stopWords.has(word));
 }
 
+function stemWord(value: string) {
+  let word = normalize(value);
+  if (word.length <= 3) return word;
+  if (word.endsWith('ies') && word.length > 4) word = word.slice(0, -3) + 'y';
+  else if (word.endsWith('ing') && word.length > 5) word = word.slice(0, -3);
+  else if (word.endsWith('ed') && word.length > 4) word = word.slice(0, -2);
+  else if (word.endsWith('es') && word.length > 4) word = word.slice(0, -2);
+  else if (word.endsWith('s') && word.length > 3) word = word.slice(0, -1);
+  return word;
+}
+
+function phraseMatchScore(query: string, field: string) {
+  const queryWords = words(query).map(stemWord);
+  const fieldWords = words(field).map(stemWord);
+  if (!queryWords.length || !fieldWords.length) return 0;
+
+  for (let i = 0; i <= queryWords.length - 2; i++) {
+    for (let j = 0; j <= fieldWords.length - 2; j++) {
+      if (queryWords[i] === fieldWords[j] && queryWords[i + 1] === fieldWords[j + 1]) return 1;
+    }
+  }
+
+  return queryWords.some((q) => fieldWords.includes(q)) ? 0.35 : 0;
+}
+
 function levenshtein(a: string, b: string) {
   if (a === b) return 0;
   if (!a.length) return b.length;
@@ -103,6 +128,18 @@ function scoreSkill(query: string, row: any) {
   const normalizedQuery = normalize(query);
   let score = 0;
   let matchedTokens = 0;
+
+  const intentFields = [
+    { value: (row.search_terms || []).join(' | '), weight: 95 },
+    { value: (row.aliases || []).join(' | '), weight: 72 },
+    { value: row.skill_name, weight: 68 },
+    { value: (row.category_names || []).join(' | '), weight: 60 },
+    { value: (row.tool_names || []).join(' | '), weight: 62 }
+  ];
+
+  for (const field of intentFields) {
+    score += phraseMatchScore(query, String(field.value || '')) * field.weight;
+  }
 
   if (normalizedQuery.length >= 2) {
     for (const field of primaryFields) {
