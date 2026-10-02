@@ -1,6 +1,19 @@
 import { pgTable, serial, text, integer, boolean, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+
 export const skills=pgTable('skills',{id:serial('id').primaryKey(),name:text('name').notNull(),slug:text('slug').notNull().unique(),searchKeyword:text('search_keyword'),deviceNeeded:text('device_needed'),gigTitle:text('gig_title'),earningRange:text('earning_range'),createdAt:timestamp('created_at').defaultNow().notNull()});
+
 export const categories=pgTable('categories',{id:serial('id').primaryKey(),name:text('name').notNull(),slug:text('slug').notNull().unique(),description:text('description').notNull(),createdAt:timestamp('created_at').defaultNow().notNull()});
+
 export const skillCategories=pgTable('skill_categories',{id:serial('id').primaryKey(),skillId:integer('skill_id').notNull().references(()=>skills.id,{onDelete:'cascade'}),categoryId:integer('category_id').notNull().references(()=>categories.id,{onDelete:'cascade'})},t=>({pair:uniqueIndex('skill_category_pair').on(t.skillId,t.categoryId)}));
+
 export const skillAliases=pgTable('skill_aliases',{id:serial('id').primaryKey(),skillId:integer('skill_id').notNull().references(()=>skills.id,{onDelete:'cascade'}),alias:text('alias').notNull(),kind:text('kind').notNull().default('alias'),createdAt:timestamp('created_at').defaultNow().notNull()},t=>({pair:uniqueIndex('skill_alias_pair').on(t.skillId,t.alias)}));
+
+export const tools=pgTable('tools',{id:serial('id').primaryKey(),name:text('name').notNull(),slug:text('slug').notNull().unique(),url:text('url').notNull(),source:text('source'),description:text('description'),isActive:boolean('is_active').default(true).notNull(),createdAt:timestamp('created_at').defaultNow().notNull()});
+
+export const skillTools=pgTable('skill_tools',{id:serial('id').primaryKey(),skillId:integer('skill_id').notNull().references(()=>skills.id,{onDelete:'cascade'}),toolId:integer('tool_id').notNull().references(()=>tools.id,{onDelete:'cascade'})},t=>({pair:uniqueIndex('skill_tool_pair').on(t.skillId,t.toolId)}));
+
+export const earningPlatforms=pgTable('earning_platforms',{id:serial('id').primaryKey(),name:text('name').notNull(),slug:text('slug').notNull().unique(),url:text('url').notNull(),source:text('source'),description:text('description'),isActive:boolean('is_active').default(true).notNull(),createdAt:timestamp('created_at').defaultNow().notNull()});
+
+export const skillEarningPlatforms=pgTable('skill_earning_platforms',{id:serial('id').primaryKey(),skillId:integer('skill_id').notNull().references(()=>skills.id,{onDelete:'cascade'}),platformId:integer('platform_id').notNull().references(()=>earningPlatforms.id,{onDelete:'cascade'})},t=>({pair:uniqueIndex('skill_earning_platform_pair').on(t.skillId,t.platformId)}));
+
 export const links=pgTable('links',{id:serial('id').primaryKey(),categoryId:integer('category_id').notNull().references(()=>categories.id,{onDelete:'cascade'}),title:text('title').notNull(),url:text('url').notNull(),source:text('source'),description:text('description'),priority:integer('priority').default(0).notNull(),isActive:boolean('is_active').default(true).notNull(),linkType:text('link_type').default('resource').notNull(),createdAt:timestamp('created_at').defaultNow().notNull()});
