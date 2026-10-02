@@ -152,7 +152,7 @@ export default function Home() {
                       {result.tools.slice(0, 6).map((link) => (
                         <li key={link.id}>
                           <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
-                          <ArrowRight size={15} aria-hidden="true" />
+                          <span className="external-arrow" aria-hidden="true">↗</span>
                         </li>
                       ))}
                     </ul>
@@ -162,21 +162,22 @@ export default function Home() {
                     <ul className="compact-resource-list">
                       {result.earningPlatforms.slice(0, 6).map((link) => (
                         <li key={link.id}>
-                          <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
+                          <a href={link.url} target="_blank" rel="noreferrer">{link.title} <span className="external-arrow" aria-hidden="true">↗</span></a>
                         </li>
                       ))}
                     </ul>
                   </div>}
                   <div className="result-resource-group">
                     <h3>📚 Learn from real articles</h3>
-                    <div className="article-list">
+                    <ul className="compact-resource-list article-resource-list">
                     {result.links.filter((link) => !link.link_type || link.link_type === 'resource').slice(0, 3).map((link) => (
-                      <a className="article-link" href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"} key={link.id}>
-                        <div><b>{link.title}</b>{link.description && <span>{link.description}</span>}<small>{link.source || 'Resource'}</small></div>
-                        <ArrowRight size={16} />
-                      </a>
+                      <li key={link.id}>
+                        <a href={link.url} target={link.internal ? undefined : "_blank"} rel={link.internal ? undefined : "noreferrer"}>
+                          {link.title} <span className="external-arrow" aria-hidden="true">↗</span>
+                        </a>
+                      </li>
                     ))}
-                    </div>
+                    </ul>
                   </div>
                 </article>
               ))}
