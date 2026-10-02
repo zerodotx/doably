@@ -152,7 +152,7 @@ export default function Home() {
                       {result.tools.slice(0, 6).map((link) => (
                         <li key={link.id}>
                           <a href={link.url} target="_blank" rel="noreferrer">{link.title}</a>
-                          <span className="external-arrow" aria-hidden="true">↗</span>
+                          <ExternalLink size={13} strokeWidth={2} aria-hidden="true" className="external-icon" />
                         </li>
                       ))}
                     </ul>
